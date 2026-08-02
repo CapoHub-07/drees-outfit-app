@@ -648,7 +648,7 @@
   const { data, error } = await _supabase
     .from('ventas')
     .select('*')
-    .ventas('created_at', { ascending: false }); // <-- CAMBIA ESTO A created_at
+    .order('created_at', { ascending: false }); // <-- CAMBIA ESTO A created_at
 
   if (error) {
     console.error("Error al cargar ventas:", error.message);
