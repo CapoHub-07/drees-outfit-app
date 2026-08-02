@@ -159,34 +159,7 @@
       </section>
     </div>
 
-    async function registrarVenta() {
-  // 1. Recopila los datos de tu formulario o carrito actual
-  const vendedorActual = "General"; // O la variable de donde saques el nombre del vendedor
-  const medioPagoSeleccionado = "Efectivo"; // O de dónde obtengas el medio de pago
-  const totalVenta = 0; // El monto total calculado de la venta
 
-  // 2. Envía los datos a Supabase incluyendo la fecha actual
-  const { data, error } = await _supabase
-    .from('ventas')
-    .insert([
-      { 
-        vendedor: vendedorActual,
-        medio_pago: medioPagoSeleccionado,
-        total: totalVenta,
-        created_at: new Date().toISOString() // <-- Esto envía la fecha y hora exacta actual
-      }
-    ]);
-
-  if (error) {
-    console.error("Error al registrar la venta:", error.message);
-    alert("Hubo un error al guardar la venta");
-    return;
-  }
-
-  // 3. Acciones tras el éxito (limpiar carrito, recargar el historial, etc.)
-  alert("¡Venta registrada con éxito!");
-  cargarHistorialVentas(); // Recarga la tabla del historial automáticamente
-}
     <!-- VISTA 3: GESTIÓN DE STOCK, REPOSICIÓN & ALERTAS -->
     <div id="view-stock" class="hidden space-y-6">
 
