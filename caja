@@ -45,7 +45,6 @@
   </header>
 
   <!-- NAV TABS -->
-  <!-- NAV TABS -->
 <nav id="master-nav" class="bg-slate-950 border-b border-slate-800 p-2 flex gap-2 overflow-x-auto">
   <button onclick="cambiarTab('pos')" id="tab-pos" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white">Caja / Venta</button>
   <button onclick="cambiarTab('ventas')" id="tab-ventas" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400">Historial</button>
