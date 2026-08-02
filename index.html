@@ -538,6 +538,7 @@
           total: totalVenta, 
           medio_pago: medioPagoSeleccionado,
           cliente_contacto: `${usuarioSesion.nombre}`
+          created_at: new Date().toISOString() // <-- Esto envía la fecha y hora exacta actual
         }])
         .select().single();
 
