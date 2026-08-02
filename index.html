@@ -10,15 +10,38 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-20">
 
+  <!-- MODAL DE LOGIN -->
+  <div id="login-modal" class="fixed inset-0 bg-slate-950/90 z-[100] flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+      <div class="text-center">
+        <h2 class="text-2xl font-bold text-amber-400 tracking-wider">DREES OUTFIT</h2>
+        <p class="text-xs text-slate-400 mt-1">Ingreso de Personal</p>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">Usuario / Vendedor</label>
+          <input type="text" id="login-user" placeholder="Ej: Admin" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">Contraseña</label>
+          <input type="password" id="login-pass" placeholder="••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <button onclick="iniciarSesion()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 mt-2">
+          Ingresar al Sistema
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
   <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
     <div>
       <h1 class="text-xl font-bold text-amber-400 tracking-wider">DREES OUTFIT</h1>
-      <p class="text-xs text-slate-400">Punto de Venta & Control de Stock</p>
+      <p class="text-xs text-slate-400">Atendido por: <span id="vendedor-activo" class="text-white font-semibold">---</span></p>
     </div>
-    <div id="status-badge" class="px-2 py-1 bg-green-900/50 text-green-400 border border-green-700 text-xs rounded-full flex items-center gap-1">
-      <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Conectado
-    </div>
+    <button onclick="cerrarSesion()" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs text-slate-300 rounded-lg border border-slate-600">
+      Salir
+    </button>
   </header>
 
   <!-- Main Container -->
@@ -91,7 +114,7 @@
         </div>
 
         <div class="grid grid-cols-3 gap-2 pt-2">
-          <button onclick="seleccionarPago('Efectivo')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400 active" data-pago="Efectivo">💵 Efectivo</button>
+          <button onclick="seleccionarPago('Efectivo')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400 active border-amber-400 bg-amber-400/10 text-amber-400" data-pago="Efectivo">💵 Efectivo</button>
           <button onclick="seleccionarPago('MercadoPago')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400" data-pago="MercadoPago">📱 MP / QR</button>
           <button onclick="seleccionarPago('Tarjeta')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400" data-pago="Tarjeta">💳 Tarjeta</button>
         </div>
@@ -106,14 +129,47 @@
 
   <script>
     const SUPABASE_URL = 'https://zzmojfukciqbxrjnmdeo.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // Reemplazar con la clave anon public que guardaste
+    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // Recordá pegar tu clave anon aquí
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let usuarioSesion = null;
     let productoActual = null;
     let carrito = [];
     let medioPagoSeleccionado = 'Efectivo';
     let html5QrcodeScanner = null;
+
+    async function iniciarSesion() {
+      const user = document.getElementById('login-user').value.trim();
+      const pass = document.getElementById('login-pass').value.trim();
+
+      if (!user || !pass) {
+        alert('Ingresá usuario y clave.');
+        return;
+      }
+
+      const { data, error } = await _supabase
+        .from('vendedores')
+        .select('*')
+        .ilike('nombre', user)
+        .eq('clave', pass)
+        .single();
+
+      if (error || !data) {
+        alert('Usuario o clave incorrectos.');
+        return;
+      }
+
+      usuarioSesion = data;
+      document.getElementById('vendedor-activo').textContent = data.nombre;
+      document.getElementById('login-modal').classList.add('hidden');
+    }
+
+    function cerrarSesion() {
+      usuarioSesion = null;
+      document.getElementById('vendedor-activo').textContent = '---';
+      document.getElementById('login-modal').classList.remove('hidden');
+    }
 
     async function buscarPorCodigo(codigoInput) {
       const code = codigoInput || document.getElementById('barcode-input').value.trim();
@@ -126,7 +182,7 @@
         .single();
 
       if (error || !data) {
-        alert('Producto no encontrado en la base de datos.');
+        alert('Producto no encontrado.');
         document.getElementById('producto-card').classList.add('hidden');
         return;
       }
@@ -152,7 +208,7 @@
       const existe = carrito.find(p => p.id === productoActual.id);
       if (existe) {
         if (existe.cantidad >= productoActual.stock_actual) {
-          alert('No puedes agregar más unidades que el stock disponible.');
+          alert('No podés agregar más del stock disponible.');
           return;
         }
         existe.cantidad++;
@@ -219,8 +275,12 @@
     }
 
     async function completarVenta() {
+      if (!usuarioSesion) {
+        alert('Debés iniciar sesión para cobrar.');
+        return;
+      }
       if (carrito.length === 0) {
-        alert('Agrega al menos una prenda para registrar la venta.');
+        alert('Agregá al menos una prenda para registrar la venta.');
         return;
       }
 
@@ -228,7 +288,11 @@
 
       const { data: venta, error: ventaErr } = await _supabase
         .from('ventas')
-        .insert([{ total: totalVenta, medio_pago: medioPagoSeleccionado }])
+        .insert([{ 
+          total: totalVenta, 
+          medio_pago: medioPagoSeleccionado,
+          cliente_contacto: `Vendedor: ${usuarioSesion.nombre}`
+        }])
         .select()
         .single();
 
@@ -250,7 +314,7 @@
         }).eq('id', item.id);
       }
 
-      alert('¡Venta registrada con éxito!');
+      alert(`¡Venta cobrada con éxito por ${usuarioSesion.nombre}!`);
       carrito = [];
       document.getElementById('producto-card').classList.add('hidden');
       actualizarCarritoUI();
