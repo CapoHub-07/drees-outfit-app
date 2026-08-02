@@ -538,7 +538,7 @@
           total: totalVenta, 
           medio_pago: medioPagoSeleccionado,
           cliente_contacto: `${usuarioSesion.nombre}`
-          creado_en: new Date().toISOString()
+          creado_en: new Date().toISOString(),
         }])
         .select().single();
 
