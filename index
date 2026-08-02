@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DreesOutfit - Control de Stock y Ventas</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-20">
+
+  <!-- Header -->
+  <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
+    <div>
+      <h1 class="text-xl font-bold text-amber-400 tracking-wider">DREES OUTFIT</h1>
+      <p class="text-xs text-slate-400">Punto de Venta & Control de Stock</p>
+    </div>
+    <div id="status-badge" class="px-2 py-1 bg-green-900/50 text-green-400 border border-green-700 text-xs rounded-full flex items-center gap-1">
+      <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Conectado
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-4xl mx-auto p-4 space-y-6">
+
+    <!-- Seccion Escaner -->
+    <section class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
+          <span>📷</span> Escáner de Código
+        </h2>
+        <button id="toggle-cam" onclick="toggleCamera()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold rounded-lg transition">
+          Abrir Cámara
+        </button>
+      </div>
+      
+      <div id="reader-container" class="hidden mb-4 overflow-hidden rounded-xl border border-indigo-500/30">
+        <div id="reader" class="w-full"></div>
+      </div>
+
+      <div class="flex gap-2">
+        <input type="text" id="barcode-input" placeholder="Escribe o escanea código..." class="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-400 transition">
+        <button onclick="buscarPorCodigo()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition">
+          Buscar
+        </button>
+      </div>
+    </section>
+
+    <!-- Seccion Detalle Producto Encontrado -->
+    <section id="producto-card" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl border-l-4 border-l-amber-400">
+      <div class="flex justify-between items-start">
+        <div>
+          <span id="prod-categoria" class="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md">Categoría</span>
+          <h3 id="prod-nombre" class="text-xl font-bold text-white mt-2">Nombre del Producto</h3>
+          <p class="text-sm text-slate-400 mt-1">Talle: <span id="prod-talle" class="text-white font-medium">L</span> | Color: <span id="prod-color" class="text-white font-medium">Negro</span></p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-slate-400">Precio</p>
+          <p id="prod-precio" class="text-2xl font-black text-amber-400">$0</p>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center">
+        <div>
+          <span class="text-xs text-slate-400">Stock Disponible:</span>
+          <span id="prod-stock" class="text-sm font-bold text-green-400 ml-1">0</span>
+        </div>
+        <button onclick="agregarAlCarrito()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 transition">
+          + Agregar a la Venta
+        </button>
+      </div>
+    </section>
+
+    <!-- Seccion Carrito / Ticket actual -->
+    <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+      <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
+        <span>🛒</span> Detalle de la Venta
+      </h2>
+
+      <div id="carrito-vacio" class="text-center py-8 text-slate-500 text-sm">
+        No hay prendas agregadas a la venta aún.
+      </div>
+
+      <div id="carrito-lista" class="space-y-3 mb-4 hidden"></div>
+
+      <div class="border-t border-slate-700 pt-4 mt-4 space-y-3">
+        <div class="flex justify-between items-center text-lg font-bold">
+          <span>Total a Cobrar:</span>
+          <span id="cart-total" class="text-2xl text-amber-400">$0</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 pt-2">
+          <button onclick="seleccionarPago('Efectivo')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400 active" data-pago="Efectivo">💵 Efectivo</button>
+          <button onclick="seleccionarPago('MercadoPago')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400" data-pago="MercadoPago">📱 MP / QR</button>
+          <button onclick="seleccionarPago('Tarjeta')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400" data-pago="Tarjeta">💳 Tarjeta</button>
+        </div>
+
+        <button onclick="completarVenta()" class="w-full mt-4 bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-600/30 transition text-center">
+          Registrar y Cobrar Venta
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://zzmojfukciqbxrjnmdeo.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // Reemplazar con la clave anon public que guardaste
+
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let productoActual = null;
+    let carrito = [];
+    let medioPagoSeleccionado = 'Efectivo';
+    let html5QrcodeScanner = null;
+
+    async function buscarPorCodigo(codigoInput) {
+      const code = codigoInput || document.getElementById('barcode-input').value.trim();
+      if (!code) return;
+
+      const { data, error } = await _supabase
+        .from('productos')
+        .select('*')
+        .eq('codigo_barras', code)
+        .single();
+
+      if (error || !data) {
+        alert('Producto no encontrado en la base de datos.');
+        document.getElementById('producto-card').classList.add('hidden');
+        return;
+      }
+
+      productoActual = data;
+      document.getElementById('prod-nombre').textContent = data.nombre;
+      document.getElementById('prod-categoria').textContent = data.categoria || 'Gral';
+      document.getElementById('prod-talle').textContent = data.talle || '-';
+      document.getElementById('prod-color').textContent = data.color || '-';
+      document.getElementById('prod-precio').textContent = `$${data.precio_venta.toLocaleString()}`;
+      document.getElementById('prod-stock').textContent = data.stock_actual;
+
+      document.getElementById('producto-card').classList.remove('hidden');
+    }
+
+    function agregarAlCarrito() {
+      if (!productoActual) return;
+      if (productoActual.stock_actual <= 0) {
+        alert('¡Atención! Este producto no tiene stock disponible.');
+        return;
+      }
+
+      const existe = carrito.find(p => p.id === productoActual.id);
+      if (existe) {
+        if (existe.cantidad >= productoActual.stock_actual) {
+          alert('No puedes agregar más unidades que el stock disponible.');
+          return;
+        }
+        existe.cantidad++;
+      } else {
+        carrito.push({ ...productoActual, cantidad: 1 });
+      }
+
+      actualizarCarritoUI();
+      document.getElementById('barcode-input').value = '';
+    }
+
+    function actualizarCarritoUI() {
+      const lista = document.getElementById('carrito-lista');
+      const vacio = document.getElementById('carrito-vacio');
+      lista.innerHTML = '';
+
+      if (carrito.length === 0) {
+        vacio.classList.remove('hidden');
+        lista.classList.add('hidden');
+        document.getElementById('cart-total').textContent = '$0';
+        return;
+      }
+
+      vacio.classList.add('hidden');
+      lista.classList.remove('hidden');
+
+      let total = 0;
+      carrito.forEach((prod, index) => {
+        const subtotal = prod.precio_venta * prod.cantidad;
+        total += subtotal;
+
+        const item = document.createElement('div');
+        item.className = 'flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-700/50';
+        item.innerHTML = `
+          <div>
+            <p class="text-sm font-bold">${prod.nombre}</p>
+            <p class="text-xs text-slate-400">$${prod.precio_venta.toLocaleString()} x ${prod.cantidad}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-amber-400">$${subtotal.toLocaleString()}</span>
+            <button onclick="eliminarDelCarrito(${index})" class="text-red-400 hover:text-red-300 text-xs font-bold">✕</button>
+          </div>
+        `;
+        lista.appendChild(item);
+      });
+
+      document.getElementById('cart-total').textContent = `$${total.toLocaleString()}`;
+    }
+
+    function eliminarDelCarrito(index) {
+      carrito.splice(index, 1);
+      actualizarCarritoUI();
+    }
+
+    function seleccionarPago(metodo) {
+      medioPagoSeleccionado = metodo;
+      document.querySelectorAll('.pago-btn').forEach(btn => {
+        if (btn.dataset.pago === metodo) {
+          btn.classList.add('border-amber-400', 'bg-amber-400/10', 'text-amber-400');
+        } else {
+          btn.classList.remove('border-amber-400', 'bg-amber-400/10', 'text-amber-400');
+        }
+      });
+    }
+
+    async function completarVenta() {
+      if (carrito.length === 0) {
+        alert('Agrega al menos una prenda para registrar la venta.');
+        return;
+      }
+
+      const totalVenta = carrito.reduce((acc, p) => acc + (p.precio_venta * p.cantidad), 0);
+
+      const { data: venta, error: ventaErr } = await _supabase
+        .from('ventas')
+        .insert([{ total: totalVenta, medio_pago: medioPagoSeleccionado }])
+        .select()
+        .single();
+
+      if (ventaErr) {
+        alert('Error al guardar la venta: ' + ventaErr.message);
+        return;
+      }
+
+      for (const item of carrito) {
+        await _supabase.from('detalle_ventas').insert([{
+          venta_id: venta.id,
+          producto_id: item.id,
+          cantidad: item.cantidad,
+          precio_unitario: item.precio_venta
+        }]);
+
+        await _supabase.from('productos').update({
+          stock_actual: item.stock_actual - item.cantidad
+        }).eq('id', item.id);
+      }
+
+      alert('¡Venta registrada con éxito!');
+      carrito = [];
+      document.getElementById('producto-card').classList.add('hidden');
+      actualizarCarritoUI();
+    }
+
+    function toggleCamera() {
+      const container = document.getElementById('reader-container');
+      if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 150 } }, false);
+        html5QrcodeScanner.render((decodedText) => {
+          document.getElementById('barcode-input').value = decodedText;
+          buscarPorCodigo(decodedText);
+          html5QrcodeScanner.clear();
+          container.classList.add('hidden');
+        });
+      } else {
+        if (html5QrcodeScanner) html5QrcodeScanner.clear();
+        container.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
