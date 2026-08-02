@@ -62,7 +62,7 @@
           <button onclick="toggleCamera()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold rounded-lg transition">Abrir Cámara</button>
         </div>
         
-        <div id="reader-container" class="hidden mb-4 overflow-hidden rounded-xl border border-indigo-500/30 bg-black">
+        <div id="reader-container" class="hidden mb-4 overflow-hidden rounded-xl border border-indigo-500/30 bg-black relative">
           <div id="reader" class="w-full"></div>
         </div>
 
@@ -146,7 +146,7 @@
         </div>
 
         <!-- Escáner para Cargar Stock -->
-        <div id="reader-stock-container" class="hidden mb-2 overflow-hidden rounded-xl border border-indigo-500/30 bg-black">
+        <div id="reader-stock-container" class="hidden mb-2 overflow-hidden rounded-xl border border-indigo-500/30 bg-black relative">
           <div id="reader-stock" class="w-full"></div>
         </div>
 
@@ -165,7 +165,7 @@
 
   <script>
     const SUPABASE_URL = 'https://zzmojfukciqbxrjnmdeo.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // <--- ACORDATE DE PEGAR TU CLAVE ACÁ
+    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // <--- COLOCÁ TU ANON_KEY DE SUPABASE AQUÍ
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -176,6 +176,17 @@
     
     let html5QrCode = null;
     let html5QrCodeStock = null;
+
+    // Formatos de códigos de barras específicos comercialmente (EAN, CODE-128, etc.)
+    const barcodeFormats = [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.QR_CODE
+    ];
 
     async function iniciarSesion() {
       const user = document.getElementById('login-user').value.trim();
@@ -449,7 +460,7 @@
       document.getElementById('new-stock').value = '';
     }
 
-    // --- ESCÁNER DE CÁMARA PRO (LEE BARRAS Y QR CONTINUO) ---
+    // --- ESCÁNER DE ALTA PRECISIÓN PARA CÓDIGOS EAN Y PRODUCTOS ---
 
     async function toggleCamera() {
       const container = document.getElementById('reader-container');
@@ -457,8 +468,17 @@
         await apagarCamaras();
         container.classList.remove('hidden');
 
-        html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 15, qrbox: { width: 260, height: 120 } };
+        html5QrCode = new Html5Qrcode("reader", { formatsToSupport: barcodeFormats, verbose: false });
+        
+        // Configuración de escaneo horizontal amplio optimizado para EAN-13 / Tita
+        const config = { 
+          fps: 20, 
+          qrbox: { width: 300, height: 150 },
+          aspectRatio: 1.0,
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true // Utiliza la API nativa del teléfono si está disponible
+          }
+        };
 
         html5QrCode.start(
           { facingMode: "environment" }, 
@@ -469,10 +489,10 @@
             await apagarCamaras();
           },
           (errorMessage) => {
-            // Ignora errores de cuadro por cuadro mientras busca el código
+            // Buscando cuadro por cuadro...
           }
         ).catch(err => {
-          alert("No se pudo iniciar la cámara. Verificá los permisos del navegador.");
+          alert("Error al abrir cámara: " + err);
           container.classList.add('hidden');
         });
       } else {
@@ -486,8 +506,16 @@
         await apagarCamaras();
         container.classList.remove('hidden');
 
-        html5QrCodeStock = new Html5Qrcode("reader-stock");
-        const config = { fps: 15, qrbox: { width: 260, height: 120 } };
+        html5QrCodeStock = new Html5Qrcode("reader-stock", { formatsToSupport: barcodeFormats, verbose: false });
+        
+        const config = { 
+          fps: 20, 
+          qrbox: { width: 300, height: 150 },
+          aspectRatio: 1.0,
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true // Activa lector por hardware del celular
+          }
+        };
 
         html5QrCodeStock.start(
           { facingMode: "environment" }, 
@@ -498,10 +526,10 @@
             document.getElementById('new-nombre').focus();
           },
           (errorMessage) => {
-            // Ignora errores mientras busca
+            // Buscando...
           }
         ).catch(err => {
-          alert("No se pudo iniciar la cámara. Verificá los permisos del navegador.");
+          alert("Error al abrir cámara: " + err);
           container.classList.add('hidden');
         });
       } else {
