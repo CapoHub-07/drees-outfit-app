@@ -1016,14 +1016,13 @@ function imprimirEtiquetaQR(productoId, nombreProducto) {
           <img src="${qrImageUrl}" alt="Código QR">
         </div>
         <script>
-          window.onload = function() { 
-            window.print(); 
-          }
+          window.onload = function() { window.print(); }
         </script>
       </body>
     </html>
   `);
   ventanaImpresion.document.close();
+ }
   </script>
   </body>
   </html>
