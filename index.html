@@ -987,15 +987,6 @@ async function exportarExcel() {
   link.click();
   document.body.removeChild(link);
 }
-<!-- NAV TABS -->
-<nav id="master-nav" class="bg-slate-950 border-b border-slate-800 p-2 flex gap-2 overflow-x-auto">
-  <button onclick="cambiarTab('pos')" id="tab-pos" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white">Caja / Venta</button>
-  <button onclick="cambiarTab('ventas')" id="tab-ventas" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400">Historial</button>
-  <button onclick="cambiarTab('stock')" id="tab-stock" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400">Cargar Stock</button>
-  <button onclick="mostrarSeccionInventario()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow transition-all">
-    📦 Ver Todo el Stock
-  </button>
-</nav>
 
 // --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
 async function borrarHistorialVentas() {
