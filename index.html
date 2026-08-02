@@ -44,7 +44,7 @@
     </button>
   </header>
 
-  <!-- NAV TABS (SOLO VISIBLE PARA ROL ADMIN/MASTER) -->
+  <!-- NAV TABS -->
   <nav id="master-nav" class="hidden bg-slate-950 border-b border-slate-800 p-2 flex justify-center gap-2">
     <button onclick="cambiarTab('pos')" id="tab-pos" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">🛍️ Caja / Venta</button>
     <button onclick="cambiarTab('ventas')" id="tab-ventas" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📊 Historial</button>
@@ -67,12 +67,10 @@
         </div>
 
         <div class="flex gap-2">
-          <!-- Soporta tipeo manual, pistola lectora USB y escáner de cámara -->
           <input type="text" id="barcode-input" placeholder="Escribe, escanea o usa pistola lectora..." class="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-400">
           <button onclick="buscarPorCodigo()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition">Buscar</button>
         </div>
 
-        <!-- Botón para alternar formulario de Ítem Manual -->
         <div class="pt-2 border-t border-slate-700/50 flex justify-between items-center">
           <span class="text-xs text-slate-400">¿Prenda sin registrar en stock?</span>
           <button onclick="toggleItemManual()" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-400 font-semibold px-3 py-1.5 rounded-lg transition border border-slate-600">➕ Agregar Ítem Manual</button>
@@ -92,11 +90,15 @@
         </div>
       </section>
 
-      <!-- Detalle Producto Encontrado -->
+      <!-- Detalle Producto Encontrado con Alerta de Stock -->
       <section id="producto-card" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl border-l-4 border-l-amber-400">
         <div class="flex justify-between items-start">
           <div>
-            <span id="prod-categoria" class="text-xs font-bold uppercase text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md">Categoría</span>
+            <div class="flex items-center gap-2">
+              <span id="prod-categoria" class="text-xs font-bold uppercase text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md">Categoría</span>
+              <!-- Banner Alerta Stock Bajo -->
+              <span id="alerta-stock-bajo" class="hidden text-xs font-bold uppercase text-red-400 bg-red-500/20 border border-red-500/30 px-2.5 py-1 rounded-md animate-pulse">⚠️ ¡Stock Bajo!</span>
+            </div>
             <h3 id="prod-nombre" class="text-xl font-bold text-white mt-2">Nombre del Producto</h3>
             <p class="text-sm text-slate-400 mt-1">Talle: <span id="prod-talle" class="text-white">L</span> | Color: <span id="prod-color" class="text-white">Negro</span></p>
           </div>
@@ -108,7 +110,7 @@
         <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center">
           <div>
             <span class="text-xs text-slate-400">Stock Disponible:</span>
-            <span id="prod-stock" class="text-sm font-bold text-green-400 ml-1">0</span>
+            <span id="prod-stock" class="text-sm font-bold ml-1">0</span>
           </div>
           <button onclick="agregarAlCarrito()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 transition">+ Agregar a la Venta</button>
         </div>
@@ -135,7 +137,7 @@
       </section>
     </div>
 
-    <!-- VISTA 2: HISTORIAL DE VENTAS (MASTER) -->
+    <!-- VISTA 2: HISTORIAL DE VENTAS -->
     <div id="view-ventas" class="hidden space-y-4">
       <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
         <h2 class="text-lg font-semibold text-amber-400 mb-4">📊 Registro General de Ventas</h2>
@@ -149,23 +151,21 @@
                 <th class="p-3 text-right">Total</th>
               </tr>
             </thead>
-            <tbody id="tabla-ventas-body" class="divide-y divide-slate-700">
-              <!-- Carga dinámica -->
-            </tbody>
+            <tbody id="tabla-ventas-body" class="divide-y divide-slate-700"></tbody>
           </table>
         </div>
       </section>
     </div>
 
-    <!-- VISTA 3: GESTIÓN DE STOCK (MASTER) -->
-    <div id="view-stock" class="hidden space-y-4">
+    <!-- VISTA 3: GESTIÓN DE STOCK & ALERTAS -->
+    <div id="view-stock" class="hidden space-y-6">
+      <!-- Cargar Producto -->
       <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-semibold text-amber-400">➕ Agregar Nuevo Producto</h2>
           <button onclick="toggleCameraStock()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition">📷 Escanear Código</button>
         </div>
 
-        <!-- Escáner para Cargar Stock -->
         <div id="reader-stock-container" class="hidden mb-2 overflow-hidden rounded-xl border border-indigo-500/30 bg-black relative">
           <div id="reader-stock" class="w-full"></div>
         </div>
@@ -178,6 +178,29 @@
           <input type="number" id="new-stock" placeholder="Stock Inicial (ej: 10)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
         </div>
         <button onclick="guardarNuevoProducto()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition mt-2">Guardar Producto en Inventario</button>
+      </section>
+
+      <!-- Tabla de Productos con Alerta de Stock Bajo (Menos de 3 unidades) -->
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-3">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-amber-400 flex items-center gap-2">⚠️ Productos en Stock Crítico (≤ 3 unidades)</h2>
+          <button onclick="cargarStockBajo()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300">🔄 Actualizar Lista</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
+              <tr>
+                <th class="p-3">Código</th>
+                <th class="p-3">Producto</th>
+                <th class="p-3">Precio</th>
+                <th class="p-3 text-center">Stock Faltante</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-stock-critico" class="divide-y divide-slate-700">
+              <!-- Carga dinámica -->
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
 
@@ -207,7 +230,6 @@
       Html5QrcodeSupportedFormats.QR_CODE
     ];
 
-    // Detector automático si usan pistola de código de barras USB/Bluetooth en PC
     document.getElementById('barcode-input').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
         buscarPorCodigo();
@@ -290,7 +312,10 @@
         document.getElementById('view-ventas').classList.remove('hidden');
         cargarHistorialVentas();
       }
-      if (tab === 'stock') document.getElementById('view-stock').classList.remove('hidden');
+      if (tab === 'stock') {
+        document.getElementById('view-stock').classList.remove('hidden');
+        cargarStockBajo();
+      }
     }
 
     // --- FUNCIONES DE CAJA / VENTA ---
@@ -317,7 +342,20 @@
       document.getElementById('prod-talle').textContent = data.talle || '-';
       document.getElementById('prod-color').textContent = data.color || '-';
       document.getElementById('prod-precio').textContent = `$${data.precio_venta.toLocaleString()}`;
-      document.getElementById('prod-stock').textContent = data.stock_actual;
+      
+      const stockEl = document.getElementById('prod-stock');
+      const alertaEl = document.getElementById('alerta-stock-bajo');
+      
+      stockEl.textContent = data.stock_actual;
+
+      // Evaluación del Stock Crítico (si quedan 2 o menos unidades)
+      if (data.stock_actual <= 2) {
+        stockEl.className = 'text-sm font-bold text-red-400 ml-1';
+        alertaEl.classList.remove('hidden');
+      } else {
+        stockEl.className = 'text-sm font-bold text-green-400 ml-1';
+        alertaEl.classList.add('hidden');
+      }
 
       document.getElementById('producto-card').classList.remove('hidden');
     }
@@ -340,8 +378,6 @@
       productoActual = null;
     }
 
-    // --- GESTIÓN DE ÍTEM MANUAL ---
-
     function toggleItemManual() {
       const card = document.getElementById('manual-item-card');
       card.classList.toggle('hidden');
@@ -360,7 +396,6 @@
         return alert('Ingresá un nombre y un precio válido para el ítem manual.');
       }
 
-      // Creamos un ítem especial sin ID de base de datos
       const itemManual = {
         id: 'manual_' + Date.now(),
         nombre: `[Manual] ${nombre}`,
@@ -371,7 +406,7 @@
 
       carrito.push(itemManual);
       actualizarCarritoUI();
-      toggleItemManual(); // Oculta el formulario
+      toggleItemManual();
     }
 
     function actualizarCarritoUI() {
@@ -446,7 +481,6 @@
       if (ventaErr) return alert('Error en venta: ' + ventaErr.message);
 
       for (const item of carrito) {
-        // Si no es un ítem manual, registramos el detalle y descontamos stock de la BD
         if (!item.esManual) {
           await _supabase.from('detalle_ventas').insert([{
             venta_id: venta.id,
@@ -467,7 +501,37 @@
       actualizarCarritoUI();
     }
 
-    // --- FUNCIONES MASTER ---
+    // --- FUNCIONES MASTER & ALERTAS DE STOCK ---
+
+    async function cargarStockBajo() {
+      const { data, error } = await _supabase
+        .from('productos')
+        .select('*')
+        .lte('stock_actual', 3) // Selecciona productos con 3 o menos unidades
+        .order('stock_actual', { ascending: true });
+
+      if (error) return;
+
+      const body = document.getElementById('tabla-stock-critico');
+      body.innerHTML = '';
+
+      if (data.length === 0) {
+        body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay productos en stock crítico por el momento 👍.</td></tr>`;
+        return;
+      }
+
+      data.forEach(p => {
+        const row = document.createElement('tr');
+        row.className = "hover:bg-slate-700/30";
+        row.innerHTML = `
+          <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
+          <td class="p-3 text-xs font-bold text-white">${p.nombre}</td>
+          <td class="p-3 text-xs text-slate-300">$${p.precio_venta.toLocaleString()}</td>
+          <td class="p-3 text-xs text-center"><span class="px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400 border border-red-500/30">${p.stock_actual} ud.</span></td>
+        `;
+        body.appendChild(row);
+      });
+    }
 
     async function cargarHistorialVentas() {
       const { data, error } = await _supabase
@@ -500,7 +564,7 @@
       const pre = parseFloat(document.getElementById('new-precio').value);
       const stk = parseInt(document.getElementById('new-stock').value);
 
-      if (!cod || !nom || !pre || isNaN(stk)) return alert('Completá los campos obligatorios (Código, Nombre, Precio, Stock).');
+      if (!cod || !nom || !pre || isNaN(stk)) return alert('Completá los campos obligatorios.');
 
       const { error } = await _supabase.from('productos').insert([{
         codigo_barras: cod,
@@ -512,7 +576,7 @@
 
       if (error) {
         if (error.code === '23505') {
-          return alert('Ese código de barras ya existe en el sistema. Editá el producto o usá otro código.');
+          return alert('Ese código de barras ya existe en el sistema.');
         }
         return alert('Error al cargar: ' + error.message);
       }
@@ -523,9 +587,11 @@
       document.getElementById('new-categoria').value = '';
       document.getElementById('new-precio').value = '';
       document.getElementById('new-stock').value = '';
+      
+      cargarStockBajo();
     }
 
-    // --- CÁMARA DE VENTA ---
+    // --- CÁMARAS ---
 
     async function toggleCamera() {
       const container = document.getElementById('reader-container');
