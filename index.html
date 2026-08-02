@@ -139,7 +139,10 @@
     <!-- VISTA 2: HISTORIAL DE VENTAS -->
     <div id="view-ventas" class="hidden space-y-4">
       <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
-        <h2 class="text-lg font-semibold text-amber-400 mb-4">📊 Registro General de Ventas</h2>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-amber-400">📊 Registro General de Ventas</h2>
+          <button onclick="cargarHistorialVentas()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300">🔄 Actualizar</button>
+        </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm text-slate-300">
             <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
@@ -290,6 +293,9 @@
         document.getElementById('master-nav').classList.add('hidden');
         document.getElementById('badge-rol').classList.add('hidden');
       }
+
+      // Activar escucha en tiempo real para mantener todo sincronizado
+      iniciarSuscripcionRealtime();
     }
 
     function cerrarSesion() {
@@ -298,6 +304,34 @@
       document.getElementById('vendedor-activo').textContent = '---';
       document.getElementById('login-modal').classList.remove('hidden');
       cambiarTab('pos');
+    }
+
+    // --- TIEMPO REAL (REALTIME) ---
+    function iniciarSuscripcionRealtime() {
+      _supabase
+        .channel('cambios-db')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, payload => {
+          // Si el producto actual en pantalla está siendo consultado y cambió, lo actualizamos
+          if (productoActual && productoActual.id === payload.new.id) {
+            productoActual = payload.new;
+            document.getElementById('prod-stock').textContent = productoActual.stock_actual;
+          }
+          if (productoRepoActual && productoRepoActual.id === payload.new.id) {
+            productoRepoActual = payload.new;
+            document.getElementById('repo-stock-actual').textContent = productoRepoActual.stock_actual;
+          }
+          // Actualizar tablas de stock crítico si el usuario es admin o está en esa vista
+          if (usuarioSesion && usuarioSesion.rol === 'admin') {
+            cargarStockBajo();
+          }
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ventas' }, payload => {
+          // Si entra una venta nueva y somos admin, recargamos el historial automáticamente
+          if (usuarioSesion && usuarioSesion.rol === 'admin') {
+            cargarHistorialVentas();
+          }
+        })
+        .subscribe();
     }
 
     async function apagarCamaras() {
@@ -496,12 +530,13 @@
 
       const totalVenta = carrito.reduce((acc, p) => acc + (p.precio_venta * p.cantidad), 0);
 
+      // Guardamos la venta especificando claramente el nombre del vendedor actual
       const { data: venta, error: ventaErr } = await _supabase
         .from('ventas')
         .insert([{ 
           total: totalVenta, 
           medio_pago: medioPagoSeleccionado,
-          cliente_contacto: `Vendedor: ${usuarioSesion.nombre}`
+          cliente_contacto: `${usuarioSesion.nombre}`
         }])
         .select().single();
 
@@ -526,6 +561,7 @@
       carrito = [];
       document.getElementById('producto-card').classList.add('hidden');
       actualizarCarritoUI();
+      cargarHistorialVentas();
     }
 
     // --- REPOSICIÓN DE STOCK EXISTENTE ---
@@ -619,12 +655,17 @@
       const body = document.getElementById('tabla-ventas-body');
       body.innerHTML = '';
 
+      if (data.length === 0) {
+        body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay ventas registradas aún.</td></tr>`;
+        return;
+      }
+
       data.forEach(v => {
         const row = document.createElement('tr');
         const fecha = new Date(v.fecha_venta).toLocaleString();
         row.innerHTML = `
           <td class="p-3 text-xs">${fecha}</td>
-          <td class="p-3 text-xs text-amber-400 font-semibold">${v.cliente_contacto || 'Gral'}</td>
+          <td class="p-3 text-xs text-amber-400 font-semibold">${v.cliente_contacto || 'General'}</td>
           <td class="p-3 text-xs">${v.medio_pago}</td>
           <td class="p-3 text-xs font-bold text-right text-green-400">$${v.total.toLocaleString()}</td>
         `;
@@ -686,9 +727,9 @@
         html5QrCode.start(
           { facingMode: "environment" }, 
           config,
-          async (decodedText) => {
-            document.getElementById('barcode-input').value = decodedText;
-            buscarPorCodigo(decodedText);
+          async (decodedTest) => {
+            document.getElementById('barcode-input').value = decodedTest;
+            buscarPorCodigo(decodedTest);
             await apagarCamaras();
           },
           (errorMessage) => {}
@@ -719,8 +760,8 @@
         html5QrCodeStock.start(
           { facingMode: "environment" }, 
           config,
-          async (decodedText) => {
-            document.getElementById('new-codigo').value = decodedText;
+          async (decodedTest) => {
+            document.getElementById('new-codigo').value = decodedTest;
             await apagarCamaras();
             document.getElementById('new-nombre').focus();
           },
