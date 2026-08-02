@@ -723,43 +723,6 @@
       
       cargarStockBajo();
     }
-// --- FUNCIÓN PARA REGISTRAR LA VENTA ---
-async function registrarVenta() {
-  // 1. Envía los datos a Supabase incluyendo la fecha y hora exacta actual
-  const { data: venta, error: ventaErr } = await _supabase
-    .from('ventas')
-    .insert([
-      { 
-        total: totalVenta,
-        medio_pago: medioPagoSeleccionado,
-        cliente_contacto: `${usuarioSesion.nombre}`,
-        creado_en: new Date().toISOString()
-      }
-    ])
-    .select()
-    .single();
-
-  if (ventaErr) {
-    return alert('Error en venta: ' + ventaErr.message);
-  }
-
-  // 2. Registro del detalle de los productos del carrito
-  for (const item of carrito) {
-    if (!item.esManual) {
-      await _supabase.from('detalle_ventas').insert([
-        {
-          venta_id: venta.id,
-          producto_id: item.id,
-          cantidad: item.cantidad,
-          precio_unitario: item.precio
-        }
-      ]);
-    }
-  }
-
-  alert("¡Venta registrada con éxito!");
-  cargarHistorialVentas();
-}
 
 
 // --- FUNCIÓN PARA CARGAR Y MOSTRAR EL HISTORIAL DE VENTAS ---
@@ -906,6 +869,123 @@ async function borrarHistorialVentas() {
       } else {
         await apagarCamaras();
       }
+      // --- FUNCIÓN PARA REGISTRAR LA VENTA ---
+async function registrarVenta() {
+  // 1. Envía los datos a Supabase incluyendo la fecha y hora exacta actual
+  const { data: venta, error: ventaErr } = await _supabase
+    .from('ventas')
+    .insert([
+      { 
+        total: totalVenta,
+        medio_pago: medioPagoSeleccionado,
+        cliente_contacto: `${usuarioSesion.nombre}`,
+        creado_en: new Date().toISOString()
+      }
+    ])
+    .select()
+    .single();
+
+  if (ventaErr) {
+    return alert('Error en venta: ' + ventaErr.message);
+  }
+
+  // 2. Registro del detalle de los productos del carrito
+  for (const item of carrito) {
+    if (!item.esManual) {
+      await _supabase.from('detalle_ventas').insert([
+        {
+          venta_id: venta.id,
+          producto_id: item.id,
+          cantidad: item.cantidad,
+          precio_unitario: item.precio
+        }
+      ]);
+    }
+  }
+
+  alert("¡Venta registrada con éxito!");
+  cargarHistorialVentas();
+}
+
+
+// --- FUNCIÓN PARA CARGAR Y MOSTRAR EL HISTORIAL DE VENTAS ---
+async function cargarHistorialVentas() {
+  const { data, error } = await _supabase
+    .from('ventas')
+    .select('*')
+    .order('creado_en', { ascending: false });
+
+  if (error) {
+    console.error("Error al cargar ventas:", error.message);
+    return;
+  }
+
+  const body = document.getElementById('tabla-ventas-body');
+  body.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay ventas registradas</td></tr>`;
+    return;
+  }
+
+  data.forEach((venta) => {
+    const row = document.createElement('tr');
+    row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
+
+    let fechaFormateada = venta.creado_en ? new Date(venta.creado_en).toLocaleString() : 'Sin fecha';
+
+    row.innerHTML = `
+      <td class="p-3 text-xs text-slate-300">${fechaFormateada}</td>
+      <td class="p-3 text-xs text-slate-300">${venta.vendedor || 'General'}</td>
+      <td class="p-3 text-xs text-slate-300">${venta.medio_pago || 'Efectivo'}</td>
+      <td class="p-3 text-xs text-right font-bold text-amber-400">$${(venta.total || 0).toLocaleString()}</td>
+    `;
+    body.appendChild(row);
+  });
+}
+
+
+// --- FUNCIÓN PARA EXPORTAR A EXCEL (CSV) ---
+async function exportarExcel() {
+  const { data, error } = await _supabase.from('ventas').select('*');
+  
+  if (error || !data || data.length === 0) {
+    return alert("No hay datos para exportar.");
+  }
+
+  let csvContent = "data:text/csv;charset=utf-8,ID,Fecha,Vendedor,Medio de Pago,Total\n";
+  
+  data.forEach(v => {
+    let fechaFormateada = v.creado_en ? new Date(v.creado_en).toLocaleString() : 'Sin fecha';
+    csvContent += `"${v.id}","${fechaFormateada}","${v.vendedor || 'General'}","${v.medio_pago || 'Efectivo'}","${v.total || 0}"\n`;
+  });
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "historial_ventas.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
+// --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
+async function borrarHistorialVentas() {
+  const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
+  if (!confirmar) return;
+
+  const { error } = await _supabase.from('ventas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+  if (error) {
+    console.error("Error al borrar historial:", error.message);
+    alert("Hubo un error al borrar el historial.");
+    return;
+  }
+
+  alert("Historial borrado con éxito.");
+  cargarHistorialVentas();
+}
     }
   </script>
 </body>
