@@ -59,7 +59,7 @@
       // 3. Muestra la información en la pantalla del celular del cliente
       document.getElementById('prod-nombre').innerText = data.nombre;
       document.getElementById('prod-info').innerText = data.info_extra || 'Sin información adicional';
-      document.getElementById('prod-precio').innerText = `$${Number(data.precio).toLocaleString()}`;
+      document.getElementById('prod-precio').innerText = `$${Number(data.precio_venta).toLocaleString()}`;
       document.getElementById('prod-unidad').innerText = `Presentación / Unidad: ${data.unidad || 'unidad'}`;
     }
 
