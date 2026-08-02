@@ -668,7 +668,7 @@
     row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
     
     row.innerHTML = `
-      <td class="p-3 text-xs text-slate-300">${venta.created_at ? new Date(venta.created_at).toLocaleString() : 'Sin fecha'}</td>
+      <td class="p-3 text-xs text-slate-300">${venta.creado_en ? new Date(venta.creado_en).toLocaleString() : 'Sin fecha'}</td>
       <td class="p-3 text-xs text-slate-300">${venta.vendedor || 'General'}</td>
       <td class="p-3 text-xs text-slate-300">${venta.medio_pago || 'Efectivo'}</td>
       <td class="p-3 text-xs text-right font-bold text-amber-400">$${(venta.total || 0).toLocaleString()}</td>
