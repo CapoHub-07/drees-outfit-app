@@ -96,7 +96,6 @@
           <div>
             <div class="flex items-center gap-2">
               <span id="prod-categoria" class="text-xs font-bold uppercase text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md">Categoría</span>
-              <!-- Banner Alerta Stock Bajo -->
               <span id="alerta-stock-bajo" class="hidden text-xs font-bold uppercase text-red-400 bg-red-500/20 border border-red-500/30 px-2.5 py-1 rounded-md animate-pulse">⚠️ ¡Stock Bajo!</span>
             </div>
             <h3 id="prod-nombre" class="text-xl font-bold text-white mt-2">Nombre del Producto</h3>
@@ -157,12 +156,40 @@
       </section>
     </div>
 
-    <!-- VISTA 3: GESTIÓN DE STOCK & ALERTAS -->
+    <!-- VISTA 3: GESTIÓN DE STOCK, REPOSICIÓN & ALERTAS -->
     <div id="view-stock" class="hidden space-y-6">
-      <!-- Cargar Producto -->
+
+      <!-- PANEL DE REPOSICIÓN DE STOCK (PRODUCTOS YA EXISTENTES) -->
+      <section class="bg-slate-800 border border-emerald-500/40 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">🔄 Reponer / Sumar Stock Existente</h2>
+        </div>
+        <p class="text-xs text-slate-400">Buscá un producto por código para agregar más unidades sin tener que volver a cargarlo.</p>
+        
+        <div class="flex gap-2">
+          <input type="text" id="repo-codigo" placeholder="Escanear o ingresar código..." class="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-400">
+          <button onclick="buscarParaReponer()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl transition">Buscar</button>
+        </div>
+
+        <!-- Tarjeta de Confirmación de Reposición -->
+        <div id="repo-card" class="hidden bg-slate-900/80 border border-emerald-500/30 rounded-xl p-4 space-y-3">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 id="repo-nombre" class="font-bold text-white text-sm">---</h3>
+              <p class="text-xs text-slate-400">Stock Actual: <span id="repo-stock-actual" class="font-bold text-amber-400">0</span> unidades</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="number" id="repo-cantidad-sumar" placeholder="Cant. a sumar" min="1" value="1" class="w-28 bg-slate-800 border border-slate-700 text-center font-bold text-emerald-400 text-sm rounded-xl py-2 focus:outline-none focus:border-emerald-400">
+              <button onclick="confirmarReposicion()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Sumar Stock</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARGAR NUEVO PRODUCTO DESDE CERO -->
       <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
         <div class="flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-amber-400">➕ Agregar Nuevo Producto</h2>
+          <h2 class="text-lg font-semibold text-amber-400">➕ Agregar Nuevo Producto (Primera Vez)</h2>
           <button onclick="toggleCameraStock()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition">📷 Escanear Código</button>
         </div>
 
@@ -180,7 +207,7 @@
         <button onclick="guardarNuevoProducto()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition mt-2">Guardar Producto en Inventario</button>
       </section>
 
-      <!-- Tabla de Productos con Alerta de Stock Bajo (Menos de 3 unidades) -->
+      <!-- TABLA STOCK CRÍTICO -->
       <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-semibold text-amber-400 flex items-center gap-2">⚠️ Productos en Stock Crítico (≤ 3 unidades)</h2>
@@ -196,9 +223,7 @@
                 <th class="p-3 text-center">Stock Faltante</th>
               </tr>
             </thead>
-            <tbody id="tabla-stock-critico" class="divide-y divide-slate-700">
-              <!-- Carga dinámica -->
-            </tbody>
+            <tbody id="tabla-stock-critico" class="divide-y divide-slate-700"></tbody>
           </table>
         </div>
       </section>
@@ -214,6 +239,7 @@
 
     let usuarioSesion = null;
     let productoActual = null;
+    let productoRepoActual = null;
     let carrito = [];
     let medioPagoSeleccionado = 'Efectivo';
     
@@ -231,9 +257,11 @@
     ];
 
     document.getElementById('barcode-input').addEventListener('keypress', function (e) {
-      if (e.key === 'Enter') {
-        buscarPorCodigo();
-      }
+      if (e.key === 'Enter') buscarPorCodigo();
+    });
+
+    document.getElementById('repo-codigo').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') buscarParaReponer();
     });
 
     async function iniciarSesion() {
@@ -348,7 +376,6 @@
       
       stockEl.textContent = data.stock_actual;
 
-      // Evaluación del Stock Crítico (si quedan 2 o menos unidades)
       if (data.stock_actual <= 2) {
         stockEl.className = 'text-sm font-bold text-red-400 ml-1';
         alertaEl.classList.remove('hidden');
@@ -501,13 +528,61 @@
       actualizarCarritoUI();
     }
 
-    // --- FUNCIONES MASTER & ALERTAS DE STOCK ---
+    // --- REPOSICIÓN DE STOCK EXISTENTE ---
+
+    async function buscarParaReponer() {
+      const code = document.getElementById('repo-codigo').value.trim();
+      if (!code) return;
+
+      const { data, error } = await _supabase
+        .from('productos')
+        .select('*')
+        .eq('codigo_barras', code)
+        .single();
+
+      if (error || !data) {
+        alert('Producto no encontrado.');
+        document.getElementById('repo-card').classList.add('hidden');
+        return;
+      }
+
+      productoRepoActual = data;
+      document.getElementById('repo-nombre').textContent = data.nombre;
+      document.getElementById('repo-stock-actual').textContent = data.stock_actual;
+      document.getElementById('repo-cantidad-sumar').value = 1;
+      document.getElementById('repo-card').classList.remove('hidden');
+    }
+
+    async function confirmarReposicion() {
+      if (!productoRepoActual) return;
+
+      const sumar = parseInt(document.getElementById('repo-cantidad-sumar').value);
+      if (isNaN(sumar) || sumar <= 0) return alert('Ingresá una cantidad válida a sumar.');
+
+      const nuevoStock = productoRepoActual.stock_actual + sumar;
+
+      const { error } = await _supabase
+        .from('productos')
+        .update({ stock_actual: nuevoStock })
+        .eq('id', productoRepoActual.id);
+
+      if (error) return alert('Error al actualizar stock: ' + error.message);
+
+      alert(`¡Stock actualizado! Nuevo stock de ${productoRepoActual.nombre}: ${nuevoStock} unidades.`);
+
+      document.getElementById('repo-codigo').value = '';
+      document.getElementById('repo-card').classList.add('hidden');
+      productoRepoActual = null;
+      cargarStockBajo();
+    }
+
+    // --- HISTORIAL & REPORTES ---
 
     async function cargarStockBajo() {
       const { data, error } = await _supabase
         .from('productos')
         .select('*')
-        .lte('stock_actual', 3) // Selecciona productos con 3 o menos unidades
+        .lte('stock_actual', 3)
         .order('stock_actual', { ascending: true });
 
       if (error) return;
@@ -576,7 +651,7 @@
 
       if (error) {
         if (error.code === '23505') {
-          return alert('Ese código de barras ya existe en el sistema.');
+          return alert('Ese código de barras ya existe. Si querés sumarle stock, usá el panel verde de Reponer Stock.');
         }
         return alert('Error al cargar: ' + error.message);
       }
