@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DreesOutfit - Control de Stock y Ventas</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -45,6 +45,7 @@
   </header>
 
   <!-- NAV TABS -->
+  <nav id="master-nav" class="hidden bg-slate-950 border-b border-slate-800 p-2 flex justify-center gap-2">
     <button onclick="cambiarTab('pos')" id="tab-pos" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">🛍️ Caja / Venta</button>
     <button onclick="cambiarTab('ventas')" id="tab-ventas" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📊 Historial</button>
     <button onclick="cambiarTab('stock')" id="tab-stock" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📦 Cargar Stock</button>
@@ -139,9 +140,6 @@
   <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
     📊 Exportar Excel
   </button>
-  <button onclick="mostrarSeccionInventario()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-1 shadow-lg transition-all">
-  📦 Ver Todo el Stock
-</button>
 
   <!-- Botón Borrar Historial -->
   <button onclick="borrarHistorialVentas()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
@@ -646,24 +644,17 @@
         return;
       }
 
-     data.forEach(p => {
-    const row = document.createElement('tr');
-    row.className = "hover:bg-slate-700/30";
-    row.innerHTML = `
-        <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
-        <td class="p-3 text-xs font-bold text-white">${p.nombre}</td>
-        <td class="p-3 text-xs text-slate-300">$${p.precio_venta.toLocaleString()}</td>
-        <td class="p-3 text-xs text-center"><span class="...">...</span></td>
-        
-        <!-- 👇 AGREGA ESTA CELDA NUEVA CON EL BOTÓN QR AQUÍ DENTRO 👇 -->
-        <td class="p-3 text-xs text-right">
-          <button onclick="imprimirEtiquetaQR('${p.id}', '${p.nombre}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded text-xs font-semibold">
-            🖨️ QR
-          </button>
-        </td>
-    `;
-    body.appendChild(row);
-});
+      data.forEach(p => {
+        const row = document.createElement('tr');
+        row.className = "hover:bg-slate-700/30";
+        row.innerHTML = `
+          <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
+          <td class="p-3 text-xs font-bold text-white">${p.nombre}</td>
+          <td class="p-3 text-xs text-slate-300">$${p.precio_venta.toLocaleString()}</td>
+          <td class="p-3 text-xs text-center"><span class="px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400 border border-red-500/30">${p.stock_actual} ud.</span></td>
+        `;
+        body.appendChild(row);
+      });
     }
 
     async function cargarHistorialVentas() {
@@ -978,6 +969,7 @@ async function exportarExcel() {
   document.body.removeChild(link);
 }
 
+
 // --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
 async function borrarHistorialVentas() {
   const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
@@ -995,37 +987,6 @@ async function borrarHistorialVentas() {
   cargarHistorialVentas();
 }
     }
-    // --- FUNCIÓN PARA GENERAR E IMPRIMIR LA ETIQUETA QR DE UN PRODUCTO ---
-function imprimirEtiquetaQR(productoId, nombreProducto) {
-  // Reemplaza 'tu-sitio.vercel.app' con el enlace real de tu aplicación desplegada
-  const urlDestino = `https://drees-outfit-app.vercel.app/producto.html?id=${productoId}`;
-  
-  // Genera el código QR utilizando la API pública
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlDestino)}`;
-  // Abre una ventana limpia para la impresión física de la etiqueta
-  const ventanaImpresion = window.open('', '_blank');
-  ventanaImpresion.document.write(`
-    <html>
-      <head>
-        <title>Imprimir QR - ${nombreProducto}</title>
-        <style>
-          body { font-family: Arial, sans-serif; text-align: center; padding-top: 20px; }
-          .etiqueta { border: 2px dashed #333; padding: 25px; display: inline-block; border-radius: 10px; width: 220px; }
-          h2 { margin: 0 0 10px 0; font-size: 18px; color: #111; }
-          p { margin: 5px 0 15px 0; font-size: 12px; color: #555; }
-          img { display: block; margin: 0 auto; }
-        </style>
-      </head>
-      <body>
-        <div class="etiqueta">
-          <h2>${nombreProducto}</h2>
-          <p>Escaneá para ver precio y detalles actualizados</p>
-          <img src="${qrImageUrl}" alt="Código QR">
-        </div>
-        <script>
-        window.onload = function() { window.print(); }
-
-      </script>
-    </body>
-  </html>
-  
+  </script>
+</body>
+</html>
