@@ -76,6 +76,72 @@
           <button onclick="toggleItemManual()" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-400 font-semibold px-3 py-1.5 rounded-lg transition border border-slate-600">➕ Agregar Ítem Manual</button>
         </div>
       </section>
+  async function mostrarSeccionInventario() {
+  // 1. Consulta todos los productos ordenados por nombre en Supabase
+  const { data, error } = await _supabase
+    .from('productos')
+    .select('*')
+    .order('nombre', { ascending: true });
+
+  if (error) {
+    alert('Error al cargar el stock.');
+    return;
+  }
+
+  // 2. Crea una ventana o sección limpia en pantalla con la tabla completa
+  let contenidoHTML = `
+    <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl p-6">
+        
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-800">
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">📦 Inventario Completo de Mercadería</h3>
+          <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-white font-bold text-lg px-2">✕</button>
+        </div>
+
+        <div class="overflow-y-auto flex-1 pr-1">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-xs text-slate-400 uppercase">
+                <th class="p-3">Código</th>
+                <th class="p-3">Prenda / Nombre</th>
+                <th class="p-3">Precio Venta</th>
+                <th class="p-3 text-center">Acciones / QR</th>
+              </tr>
+            </thead>
+            <tbody>
+  `;
+
+  if (data.length === 0) {
+    contenidoHTML += `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay productos cargados todavía.</td></tr>`;
+  } else {
+    data.forEach(p => {
+      contenidoHTML += `
+        <tr class="border-b border-slate-800/50 hover:bg-slate-800/40 transition-colors">
+          <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras || '-'}</td>
+          <td class="p-3 text-xs font-bold text-white">${p.nombre}</td>
+          <td class="p-3 text-xs text-emerald-400 font-semibold">$${Number(p.precio_venta || 0).toLocaleString()}</td>
+          <td class="p-3 text-xs text-center">
+            <button onclick="imprimirEtiquetaQR('${p.id}', '${p.nombre}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors inline-flex items-center gap-1">
+              🖨️ Imprimir QR
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  contenidoHTML += `
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  // Inyecta el modal con la tabla en la página actual
+  document.body.insertAdjacentHTML('beforeend', contenidoHTML);
+}
 
       <!-- FORMULARIO OCULTO DE ÍTEM MANUAL -->
       <section id="manual-item-card" class="hidden bg-slate-800 border border-amber-500/40 rounded-2xl p-4 shadow-xl space-y-3">
@@ -140,6 +206,9 @@
   <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
     📊 Exportar Excel
   </button>
+  <button onclick="mostrarSeccionInventario()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-1 shadow-lg transition-all">
+  📦 Ver Todo el Stock
+</button>
 
   <!-- Botón Borrar Historial -->
   <button onclick="borrarHistorialVentas()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
@@ -1036,6 +1105,7 @@ function imprimirEtiquetaQR(productoId, nombreProducto) {
 `);
 ventanaImpresion.document.close();
 }
+
   </script>
   </body>
   </html>
