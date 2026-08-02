@@ -56,8 +56,8 @@
 
     <!-- VISTA 1: POS / VENTA -->
     <div id="view-pos" class="space-y-6">
-      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
-        <div class="flex justify-between items-center mb-3">
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl space-y-3">
+        <div class="flex justify-between items-center">
           <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">📷 Escáner de Código</h2>
           <button onclick="toggleCamera()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold rounded-lg transition">Abrir Cámara</button>
         </div>
@@ -67,12 +67,32 @@
         </div>
 
         <div class="flex gap-2">
-          <input type="text" id="barcode-input" placeholder="Escribe o escanea código..." class="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-400">
+          <!-- Soporta tipeo manual, pistola lectora USB y escáner de cámara -->
+          <input type="text" id="barcode-input" placeholder="Escribe, escanea o usa pistola lectora..." class="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-400">
           <button onclick="buscarPorCodigo()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition">Buscar</button>
+        </div>
+
+        <!-- Botón para alternar formulario de Ítem Manual -->
+        <div class="pt-2 border-t border-slate-700/50 flex justify-between items-center">
+          <span class="text-xs text-slate-400">¿Prenda sin registrar en stock?</span>
+          <button onclick="toggleItemManual()" class="text-xs bg-slate-700 hover:bg-slate-600 text-amber-400 font-semibold px-3 py-1.5 rounded-lg transition border border-slate-600">➕ Agregar Ítem Manual</button>
         </div>
       </section>
 
-      <!-- Detalle Producto -->
+      <!-- FORMULARIO OCULTO DE ÍTEM MANUAL -->
+      <section id="manual-item-card" class="hidden bg-slate-800 border border-amber-500/40 rounded-2xl p-4 shadow-xl space-y-3">
+        <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider">Cargar Producto Manual / Libre</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <input type="text" id="manual-nombre" placeholder="Nombre o detalle (ej: Remera suelta)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400 md:col-span-2">
+          <input type="number" id="manual-precio" placeholder="Precio ($)" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div class="flex justify-end gap-2">
+          <button onclick="toggleItemManual()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-xs text-slate-300 rounded-lg">Cancelar</button>
+          <button onclick="agregarItemManualAlCarrito()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg transition">Agregar al Resumen</button>
+        </div>
+      </section>
+
+      <!-- Detalle Producto Encontrado -->
       <section id="producto-card" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl border-l-4 border-l-amber-400">
         <div class="flex justify-between items-start">
           <div>
@@ -165,7 +185,7 @@
 
   <script>
     const SUPABASE_URL = 'https://zzmojfukciqbxrjnmdeo.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // <--- COLOCÁ TU ANON_KEY DE SUPABASE AQUÍ
+    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // <--- ACORDATE DE PEGAR TU CLAVE ACÁ
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -177,7 +197,6 @@
     let html5QrCode = null;
     let html5QrCodeStock = null;
 
-    // Formatos de códigos de barras específicos comercialmente (EAN, CODE-128, etc.)
     const barcodeFormats = [
       Html5QrcodeSupportedFormats.EAN_13,
       Html5QrcodeSupportedFormats.EAN_8,
@@ -187,6 +206,13 @@
       Html5QrcodeSupportedFormats.CODE_39,
       Html5QrcodeSupportedFormats.QR_CODE
     ];
+
+    // Detector automático si usan pistola de código de barras USB/Bluetooth en PC
+    document.getElementById('barcode-input').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        buscarPorCodigo();
+      }
+    });
 
     async function iniciarSesion() {
       const user = document.getElementById('login-user').value.trim();
@@ -280,7 +306,7 @@
         .single();
 
       if (error || !data) {
-        alert('Producto no encontrado.');
+        alert('Producto no encontrado en inventario.');
         document.getElementById('producto-card').classList.add('hidden');
         return;
       }
@@ -310,6 +336,42 @@
 
       actualizarCarritoUI();
       document.getElementById('barcode-input').value = '';
+      document.getElementById('producto-card').classList.add('hidden');
+      productoActual = null;
+    }
+
+    // --- GESTIÓN DE ÍTEM MANUAL ---
+
+    function toggleItemManual() {
+      const card = document.getElementById('manual-item-card');
+      card.classList.toggle('hidden');
+      if (!card.classList.contains('hidden')) {
+        document.getElementById('manual-nombre').value = '';
+        document.getElementById('manual-precio').value = '';
+        document.getElementById('manual-nombre').focus();
+      }
+    }
+
+    function agregarItemManualAlCarrito() {
+      const nombre = document.getElementById('manual-nombre').value.trim();
+      const precio = parseFloat(document.getElementById('manual-precio').value);
+
+      if (!nombre || isNaN(precio) || precio <= 0) {
+        return alert('Ingresá un nombre y un precio válido para el ítem manual.');
+      }
+
+      // Creamos un ítem especial sin ID de base de datos
+      const itemManual = {
+        id: 'manual_' + Date.now(),
+        nombre: `[Manual] ${nombre}`,
+        precio_venta: precio,
+        cantidad: 1,
+        esManual: true
+      };
+
+      carrito.push(itemManual);
+      actualizarCarritoUI();
+      toggleItemManual(); // Oculta el formulario
     }
 
     function actualizarCarritoUI() {
@@ -336,7 +398,7 @@
         item.className = 'flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-700/50';
         item.innerHTML = `
           <div>
-            <p class="text-sm font-bold">${prod.nombre}</p>
+            <p class="text-sm font-bold text-amber-300">${prod.nombre}</p>
             <p class="text-xs text-slate-400">$${prod.precio_venta.toLocaleString()} x ${prod.cantidad}</p>
           </div>
           <div class="flex items-center gap-3">
@@ -368,7 +430,7 @@
 
     async function completarVenta() {
       if (!usuarioSesion) return alert('Debés iniciar sesión.');
-      if (carrito.length === 0) return alert('Agregá al menos una prenda.');
+      if (carrito.length === 0) return alert('Agregá al menos una prenda o ítem.');
 
       const totalVenta = carrito.reduce((acc, p) => acc + (p.precio_venta * p.cantidad), 0);
 
@@ -384,16 +446,19 @@
       if (ventaErr) return alert('Error en venta: ' + ventaErr.message);
 
       for (const item of carrito) {
-        await _supabase.from('detalle_ventas').insert([{
-          venta_id: venta.id,
-          producto_id: item.id,
-          cantidad: item.cantidad,
-          precio_unitario: item.precio_venta
-        }]);
+        // Si no es un ítem manual, registramos el detalle y descontamos stock de la BD
+        if (!item.esManual) {
+          await _supabase.from('detalle_ventas').insert([{
+            venta_id: venta.id,
+            producto_id: item.id,
+            cantidad: item.cantidad,
+            precio_unitario: item.precio_venta
+          }]);
 
-        await _supabase.from('productos').update({
-          stock_actual: item.stock_actual - item.cantidad
-        }).eq('id', item.id);
+          await _supabase.from('productos').update({
+            stock_actual: item.stock_actual - item.cantidad
+          }).eq('id', item.id);
+        }
       }
 
       alert(`¡Venta cobrada con éxito! Total: $${totalVenta.toLocaleString()}`);
@@ -460,7 +525,7 @@
       document.getElementById('new-stock').value = '';
     }
 
-    // --- ESCÁNER DE ALTA PRECISIÓN PARA CÓDIGOS EAN Y PRODUCTOS ---
+    // --- CÁMARA DE VENTA ---
 
     async function toggleCamera() {
       const container = document.getElementById('reader-container');
@@ -470,14 +535,11 @@
 
         html5QrCode = new Html5Qrcode("reader", { formatsToSupport: barcodeFormats, verbose: false });
         
-        // Configuración de escaneo horizontal amplio optimizado para EAN-13 / Tita
         const config = { 
           fps: 20, 
           qrbox: { width: 300, height: 150 },
           aspectRatio: 1.0,
-          experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true // Utiliza la API nativa del teléfono si está disponible
-          }
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true }
         };
 
         html5QrCode.start(
@@ -488,9 +550,7 @@
             buscarPorCodigo(decodedText);
             await apagarCamaras();
           },
-          (errorMessage) => {
-            // Buscando cuadro por cuadro...
-          }
+          (errorMessage) => {}
         ).catch(err => {
           alert("Error al abrir cámara: " + err);
           container.classList.add('hidden');
@@ -512,9 +572,7 @@
           fps: 20, 
           qrbox: { width: 300, height: 150 },
           aspectRatio: 1.0,
-          experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true // Activa lector por hardware del celular
-          }
+          experimentalFeatures: { useBarCodeDetectorIfSupported: true }
         };
 
         html5QrCodeStock.start(
@@ -525,9 +583,7 @@
             await apagarCamaras();
             document.getElementById('new-nombre').focus();
           },
-          (errorMessage) => {
-            // Buscando...
-          }
+          (errorMessage) => {}
         ).catch(err => {
           alert("Error al abrir cámara: " + err);
           container.classList.add('hidden');
