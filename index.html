@@ -645,33 +645,41 @@
     }
 
     async function cargarHistorialVentas() {
-      const { data, error } = await _supabase
-        .from('ventas')
-        .select('*')
-        .order('fecha_venta', { ascending: false });
+  // Nota: Si tu columna de fecha se llama 'created_at' o 'fecha', cámbiala aquí abajo
+  const { data, error } = await _supabase
+    .from('ventas')
+    .select('*')
+    .order('fecha_venta', { ascending: false }); 
 
-      if (error) return;
+  if (error) {
+    console.error("Error al cargar ventas:", error.message);
+    return;
+  }
 
-      const body = document.getElementById('tabla-ventas-body');
-      body.innerHTML = '';
+  const body = document.getElementById('tabla-ventas-body');
+  body.innerHTML = '';
 
-      if (data.length === 0) {
-        body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay ventas registradas aún.</td></tr>`;
-        return;
-      }
+  if (!data || data.length === 0) {
+    body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay ventas registradas.</td></tr>`;
+    return;
+  }
 
-      data.forEach(v => {
-        const row = document.createElement('tr');
-        const fecha = new Date(v.fecha_venta).toLocaleString();
-        row.innerHTML = `
-          <td class="p-3 text-xs">${fecha}</td>
-          <td class="p-3 text-xs text-amber-400 font-semibold">${v.cliente_contacto || 'General'}</td>
-          <td class="p-3 text-xs">${v.medio_pago}</td>
-          <td class="p-3 text-xs font-bold text-right text-green-400">$${v.total.toLocaleString()}</td>
-        `;
-        body.appendChild(row);
-      });
-    }
+  // Renderizar las filas en la tabla
+  data.forEach((venta) => {
+    const row = document.createElement('tr');
+    row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
+    
+    // Ajusta las columnas según los nombres exactos de tu tabla
+    row.innerHTML = `
+      <td class="p-3 text-xs text-slate-300">${new Date(venta.fecha_venta || venta.created_at).toLocaleString()}</td>
+      <td class="p-3 text-xs text-slate-300">${venta.vendedor || 'General'}</td>
+      <td class="p-3 text-xs text-slate-300">${venta.medio_pago || 'Efectivo'}</td>
+      <td class="p-3 text-xs text-right font-bold text-amber-400">$${(venta.total || 0).toLocaleString()}</td>
+    `;
+    
+    body.appendChild(row);
+  });
+}
 
     async function guardarNuevoProducto() {
       const cod = document.getElementById('new-codigo').value.trim();
