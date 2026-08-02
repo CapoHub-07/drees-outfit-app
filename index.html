@@ -62,7 +62,7 @@
           <button onclick="toggleCamera()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold rounded-lg transition">Abrir Cámara</button>
         </div>
         
-        <div id="reader-container" class="hidden mb-4 overflow-hidden rounded-xl border border-indigo-500/30 bg-slate-900">
+        <div id="reader-container" class="hidden mb-4 overflow-hidden rounded-xl border border-indigo-500/30 bg-black">
           <div id="reader" class="w-full"></div>
         </div>
 
@@ -146,7 +146,7 @@
         </div>
 
         <!-- Escáner para Cargar Stock -->
-        <div id="reader-stock-container" class="hidden mb-2 overflow-hidden rounded-xl border border-indigo-500/30 bg-slate-900">
+        <div id="reader-stock-container" class="hidden mb-2 overflow-hidden rounded-xl border border-indigo-500/30 bg-black">
           <div id="reader-stock" class="w-full"></div>
         </div>
 
@@ -174,9 +174,8 @@
     let carrito = [];
     let medioPagoSeleccionado = 'Efectivo';
     
-    // Variables para las dos cámaras separadas
-    let html5QrcodeScanner = null;
-    let html5QrcodeScannerStock = null;
+    let html5QrCode = null;
+    let html5QrCodeStock = null;
 
     async function iniciarSesion() {
       const user = document.getElementById('login-user').value.trim();
@@ -207,34 +206,38 @@
     }
 
     function cerrarSesion() {
-      apagarCamaras(); // Apaga cámaras por seguridad al salir
+      apagarCamaras();
       usuarioSesion = null;
       document.getElementById('vendedor-activo').textContent = '---';
       document.getElementById('login-modal').classList.remove('hidden');
       cambiarTab('pos');
     }
 
-    function apagarCamaras() {
-      if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear();
-        document.getElementById('reader-container').classList.add('hidden');
-      }
-      if (html5QrcodeScannerStock) {
-        html5QrcodeScannerStock.clear();
-        document.getElementById('reader-stock-container').classList.add('hidden');
-      }
+    async function apagarCamaras() {
+      try {
+        if (html5QrCode && html5QrCode.isScanning) {
+          await html5QrCode.stop();
+          html5QrCode.clear();
+        }
+      } catch(e) {}
+      document.getElementById('reader-container').classList.add('hidden');
+
+      try {
+        if (html5QrCodeStock && html5QrCodeStock.isScanning) {
+          await html5QrCodeStock.stop();
+          html5QrCodeStock.clear();
+        }
+      } catch(e) {}
+      document.getElementById('reader-stock-container').classList.add('hidden');
     }
 
     function cambiarTab(tab) {
-      // 1. Apagar cualquier cámara activa al cambiar de sección
       apagarCamaras();
 
-      // 2. Ocultar todas las vistas
       document.getElementById('view-pos').classList.add('hidden');
       document.getElementById('view-ventas').classList.add('hidden');
       document.getElementById('view-stock').classList.add('hidden');
 
-      // 3. Reiniciar estilos de los botones del menú
       const botones = ['tab-pos', 'tab-ventas', 'tab-stock'];
       botones.forEach(b => {
         const btn = document.getElementById(b);
@@ -242,7 +245,6 @@
         btn.classList.add('bg-slate-800', 'text-slate-300');
       });
 
-      // 4. Mostrar la vista seleccionada y pintar su botón
       document.getElementById('tab-' + tab).classList.remove('bg-slate-800', 'text-slate-300');
       document.getElementById('tab-' + tab).classList.add('bg-amber-500', 'text-slate-950');
 
@@ -389,7 +391,7 @@
       actualizarCarritoUI();
     }
 
-    // --- FUNCIONES MASTER (HISTORIAL Y STOCK) ---
+    // --- FUNCIONES MASTER ---
 
     async function cargarHistorialVentas() {
       const { data, error } = await _supabase
@@ -447,44 +449,63 @@
       document.getElementById('new-stock').value = '';
     }
 
-    // --- FUNCIONES DE CÁMARA ---
+    // --- ESCÁNER DE CÁMARA PRO (LEE BARRAS Y QR CONTINUO) ---
 
-    // Cámara para la Venta (Caja)
-    function toggleCamera() {
+    async function toggleCamera() {
       const container = document.getElementById('reader-container');
       if (container.classList.contains('hidden')) {
-        apagarCamaras(); // Asegura que la otra cámara esté apagada
+        await apagarCamaras();
         container.classList.remove('hidden');
-        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 150 } }, false);
-        html5QrcodeScanner.render((decodedText) => {
-          document.getElementById('barcode-input').value = decodedText;
-          buscarPorCodigo(decodedText);
-          html5QrcodeScanner.clear();
+
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 15, qrbox: { width: 260, height: 120 } };
+
+        html5QrCode.start(
+          { facingMode: "environment" }, 
+          config,
+          async (decodedText) => {
+            document.getElementById('barcode-input').value = decodedText;
+            buscarPorCodigo(decodedText);
+            await apagarCamaras();
+          },
+          (errorMessage) => {
+            // Ignora errores de cuadro por cuadro mientras busca el código
+          }
+        ).catch(err => {
+          alert("No se pudo iniciar la cámara. Verificá los permisos del navegador.");
           container.classList.add('hidden');
         });
       } else {
-        if (html5QrcodeScanner) html5QrcodeScanner.clear();
-        container.classList.add('hidden');
+        await apagarCamaras();
       }
     }
 
-    // Cámara para agregar Stock Nuevo (Admin)
-    function toggleCameraStock() {
+    async function toggleCameraStock() {
       const container = document.getElementById('reader-stock-container');
       if (container.classList.contains('hidden')) {
-        apagarCamaras(); // Asegura que la otra cámara esté apagada
+        await apagarCamaras();
         container.classList.remove('hidden');
-        html5QrcodeScannerStock = new Html5QrcodeScanner("reader-stock", { fps: 10, qrbox: { width: 250, height: 150 } }, false);
-        html5QrcodeScannerStock.render((decodedText) => {
-          document.getElementById('new-codigo').value = decodedText;
-          html5QrcodeScannerStock.clear();
+
+        html5QrCodeStock = new Html5Qrcode("reader-stock");
+        const config = { fps: 15, qrbox: { width: 260, height: 120 } };
+
+        html5QrCodeStock.start(
+          { facingMode: "environment" }, 
+          config,
+          async (decodedText) => {
+            document.getElementById('new-codigo').value = decodedText;
+            await apagarCamaras();
+            document.getElementById('new-nombre').focus();
+          },
+          (errorMessage) => {
+            // Ignora errores mientras busca
+          }
+        ).catch(err => {
+          alert("No se pudo iniciar la cámara. Verificá los permisos del navegador.");
           container.classList.add('hidden');
-          // Hace focus automático en el nombre para seguir escribiendo rápido
-          document.getElementById('new-nombre').focus(); 
         });
       } else {
-        if (html5QrcodeScannerStock) html5QrcodeScannerStock.clear();
-        container.classList.add('hidden');
+        await apagarCamaras();
       }
     }
   </script>
