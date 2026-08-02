@@ -45,14 +45,11 @@
   </header>
 
   <!-- NAV TABS -->
-<nav id="master-nav" class="bg-slate-950 border-b border-slate-800 p-2 flex gap-2 overflow-x-auto">
-  <button onclick="cambiarTab('pos')" id="tab-pos" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-white">Caja / Venta</button>
-  <button onclick="cambiarTab('ventas')" id="tab-ventas" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400">Historial</button>
-  <button onclick="cambiarTab('stock')" id="tab-stock" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400">Cargar Stock</button>
-  <button onclick="mostrarSeccionInventario()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow transition-all">
-    📦 Ver Todo el Stock
-  </button>
-</nav>
+  <nav id="master-nav" class="hidden bg-slate-950 border-b border-slate-800 p-2 flex justify-center gap-2">
+    <button onclick="cambiarTab('pos')" id="tab-pos" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">🛍️ Caja / Venta</button>
+    <button onclick="cambiarTab('ventas')" id="tab-ventas" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📊 Historial</button>
+    <button onclick="cambiarTab('stock')" id="tab-stock" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📦 Cargar Stock</button>
+  </nav>
 
   <!-- CONTENIDO PRINCIPAL -->
   <main class="max-w-4xl mx-auto p-4 space-y-6">
