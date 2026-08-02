@@ -11,15 +11,15 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans pb-20">
 
   <!-- MODAL DE LOGIN -->
-  <div id="login-modal" class="fixed inset-0 bg-slate-950/90 z-[100] flex items-center justify-center p-4">
+  <div id="login-modal" class="fixed inset-0 bg-slate-950/95 z-[100] flex items-center justify-center p-4">
     <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4">
       <div class="text-center">
         <h2 class="text-2xl font-bold text-amber-400 tracking-wider">DREES OUTFIT</h2>
-        <p class="text-xs text-slate-400 mt-1">Ingreso de Personal</p>
+        <p class="text-xs text-slate-400 mt-1">Punto de Venta & Administración</p>
       </div>
       <div class="space-y-3">
         <div>
-          <label class="text-xs text-slate-400 block mb-1">Usuario / Vendedor</label>
+          <label class="text-xs text-slate-400 block mb-1">Usuario</label>
           <input type="text" id="login-user" placeholder="Ej: Admin" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-amber-400">
         </div>
         <div>
@@ -33,103 +33,131 @@
     </div>
   </div>
 
-  <!-- Header -->
+  <!-- HEADER -->
   <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
     <div>
       <h1 class="text-xl font-bold text-amber-400 tracking-wider">DREES OUTFIT</h1>
-      <p class="text-xs text-slate-400">Atendido por: <span id="vendedor-activo" class="text-white font-semibold">---</span></p>
+      <p class="text-xs text-slate-400">Usuario: <span id="vendedor-activo" class="text-white font-semibold">---</span> <span id="badge-rol" class="ml-1 bg-amber-400/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold hidden">Master</span></p>
     </div>
     <button onclick="cerrarSesion()" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs text-slate-300 rounded-lg border border-slate-600">
       Salir
     </button>
   </header>
 
-  <!-- Main Container -->
+  <!-- NAV TABS (SOLO VISIBLE PARA ROL ADMIN/MASTER) -->
+  <nav id="master-nav" class="hidden bg-slate-950 border-b border-slate-800 p-2 flex justify-center gap-2">
+    <button onclick="cambiarTab('pos')" id="tab-pos" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">🛍️ Caja / Venta</button>
+    <button onclick="cambiarTab('ventas')" id="tab-ventas" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📊 Historial Ventas</button>
+    <button onclick="cambiarTab('stock')" id="tab-stock" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📦 Cargar Stock</button>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
   <main class="max-w-4xl mx-auto p-4 space-y-6">
 
-    <!-- Seccion Escaner -->
-    <section class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">
-          <span>📷</span> Escáner de Código
-        </h2>
-        <button id="toggle-cam" onclick="toggleCamera()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold rounded-lg transition">
-          Abrir Cámara
-        </button>
-      </div>
-      
-      <div id="reader-container" class="hidden mb-4 overflow-hidden rounded-xl border border-indigo-500/30">
-        <div id="reader" class="w-full"></div>
-      </div>
-
-      <div class="flex gap-2">
-        <input type="text" id="barcode-input" placeholder="Escribe o escanea código..." class="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-400 transition">
-        <button onclick="buscarPorCodigo()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition">
-          Buscar
-        </button>
-      </div>
-    </section>
-
-    <!-- Seccion Detalle Producto Encontrado -->
-    <section id="producto-card" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl border-l-4 border-l-amber-400">
-      <div class="flex justify-between items-start">
-        <div>
-          <span id="prod-categoria" class="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md">Categoría</span>
-          <h3 id="prod-nombre" class="text-xl font-bold text-white mt-2">Nombre del Producto</h3>
-          <p class="text-sm text-slate-400 mt-1">Talle: <span id="prod-talle" class="text-white font-medium">L</span> | Color: <span id="prod-color" class="text-white font-medium">Negro</span></p>
+    <!-- VISTA 1: POS / VENTA (Para todos) -->
+    <div id="view-pos" class="space-y-6">
+      <!-- Seccion Escaner -->
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-lg font-semibold text-slate-200 flex items-center gap-2">📷 Escáner de Código</h2>
+          <button id="toggle-cam" onclick="toggleCamera()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold rounded-lg transition">Abrir Cámara</button>
         </div>
-        <div class="text-right">
-          <p class="text-xs text-slate-400">Precio</p>
-          <p id="prod-precio" class="text-2xl font-black text-amber-400">$0</p>
-        </div>
-      </div>
-
-      <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center">
-        <div>
-          <span class="text-xs text-slate-400">Stock Disponible:</span>
-          <span id="prod-stock" class="text-sm font-bold text-green-400 ml-1">0</span>
-        </div>
-        <button onclick="agregarAlCarrito()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 transition">
-          + Agregar a la Venta
-        </button>
-      </div>
-    </section>
-
-    <!-- Seccion Carrito / Ticket actual -->
-    <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
-      <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-        <span>🛒</span> Detalle de la Venta
-      </h2>
-
-      <div id="carrito-vacio" class="text-center py-8 text-slate-500 text-sm">
-        No hay prendas agregadas a la venta aún.
-      </div>
-
-      <div id="carrito-lista" class="space-y-3 mb-4 hidden"></div>
-
-      <div class="border-t border-slate-700 pt-4 mt-4 space-y-3">
-        <div class="flex justify-between items-center text-lg font-bold">
-          <span>Total a Cobrar:</span>
-          <span id="cart-total" class="text-2xl text-amber-400">$0</span>
+        
+        <div id="reader-container" class="hidden mb-4 overflow-hidden rounded-xl border border-indigo-500/30">
+          <div id="reader" class="w-full"></div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 pt-2">
-          <button onclick="seleccionarPago('Efectivo')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400 active border-amber-400 bg-amber-400/10 text-amber-400" data-pago="Efectivo">💵 Efectivo</button>
-          <button onclick="seleccionarPago('MercadoPago')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400" data-pago="MercadoPago">📱 MP / QR</button>
-          <button onclick="seleccionarPago('Tarjeta')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs text-center font-medium hover:border-amber-400 focus:border-amber-400" data-pago="Tarjeta">💳 Tarjeta</button>
+        <div class="flex gap-2">
+          <input type="text" id="barcode-input" placeholder="Escribe o escanea código..." class="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-amber-400">
+          <button onclick="buscarPorCodigo()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition">Buscar</button>
         </div>
+      </section>
 
-        <button onclick="completarVenta()" class="w-full mt-4 bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-600/30 transition text-center">
-          Registrar y Cobrar Venta
-        </button>
-      </div>
-    </section>
+      <!-- Detalle Producto -->
+      <section id="producto-card" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl border-l-4 border-l-amber-400">
+        <div class="flex justify-between items-start">
+          <div>
+            <span id="prod-categoria" class="text-xs font-bold uppercase text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-md">Categoría</span>
+            <h3 id="prod-nombre" class="text-xl font-bold text-white mt-2">Nombre del Producto</h3>
+            <p class="text-sm text-slate-400 mt-1">Talle: <span id="prod-talle" class="text-white">L</span> | Color: <span id="prod-color" class="text-white">Negro</span></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-slate-400">Precio</p>
+            <p id="prod-precio" class="text-2xl font-black text-amber-400">$0</p>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center">
+          <div>
+            <span class="text-xs text-slate-400">Stock Disponible:</span>
+            <span id="prod-stock" class="text-sm font-bold text-green-400 ml-1">0</span>
+          </div>
+          <button onclick="agregarAlCarrito()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 transition">+ Agregar a la Venta</button>
+        </div>
+      </section>
+
+      <!-- Carrito -->
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+        <h2 class="text-lg font-semibold text-slate-200 mb-4">🛒 Detalle de la Venta</h2>
+        <div id="carrito-vacio" class="text-center py-8 text-slate-500 text-sm">No hay prendas agregadas a la venta aún.</div>
+        <div id="carrito-lista" class="space-y-3 mb-4 hidden"></div>
+
+        <div class="border-t border-slate-700 pt-4 mt-4 space-y-3">
+          <div class="flex justify-between items-center text-lg font-bold">
+            <span>Total a Cobrar:</span>
+            <span id="cart-total" class="text-2xl text-amber-400">$0</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 pt-2">
+            <button onclick="seleccionarPago('Efectivo')" class="pago-btn border border-amber-400 bg-amber-400/10 text-amber-400 rounded-xl p-2.5 text-xs font-medium" data-pago="Efectivo">💵 Efectivo</button>
+            <button onclick="seleccionarPago('MercadoPago')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs font-medium" data-pago="MercadoPago">📱 MP / QR</button>
+            <button onclick="seleccionarPago('Tarjeta')" class="pago-btn border border-slate-700 bg-slate-900 rounded-xl p-2.5 text-xs font-medium" data-pago="Tarjeta">💳 Tarjeta</button>
+          </div>
+          <button onclick="completarVenta()" class="w-full mt-4 bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-600/30 transition">Registrar y Cobrar Venta</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- VISTA 2: HISTORIAL DE VENTAS (MASTER) -->
+    <div id="view-ventas" class="hidden space-y-4">
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+        <h2 class="text-lg font-semibold text-amber-400 mb-4">📊 Registro General de Ventas</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
+              <tr>
+                <th class="p-3">Fecha/Hora</th>
+                <th class="p-3">Vendedor</th>
+                <th class="p-3">Medio Pago</th>
+                <th class="p-3 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-ventas-body" class="divide-y divide-slate-700">
+              <!-- Carga dinámica -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- VISTA 3: GESTIÓN DE STOCK (MASTER) -->
+    <div id="view-stock" class="hidden space-y-4">
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+        <h2 class="text-lg font-semibold text-amber-400">➕ Agregar Nuevo Producto</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input type="text" id="new-codigo" placeholder="Código de Barras (ej: 999100)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+          <input type="text" id="new-nombre" placeholder="Nombre (ej: Remera Negra Oversize)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+          <input type="text" id="new-categoria" placeholder="Categoría (ej: REMERAS)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+          <input type="number" id="new-precio" placeholder="Precio Venta (ej: 25000)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+          <input type="number" id="new-stock" placeholder="Stock Inicial (ej: 10)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm">
+        </div>
+        <button onclick="guardarNuevoProducto()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl transition">Guardar Producto en Inventario</button>
+      </section>
+    </div>
 
   </main>
 
   <script>
     const SUPABASE_URL = 'https://zzmojfukciqbxrjnmdeo.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // Recordá pegar tu clave anon aquí
+    const SUPABASE_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX'; // Pegá tu anon key
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -143,10 +171,7 @@
       const user = document.getElementById('login-user').value.trim();
       const pass = document.getElementById('login-pass').value.trim();
 
-      if (!user || !pass) {
-        alert('Ingresá usuario y clave.');
-        return;
-      }
+      if (!user || !pass) return alert('Ingresá usuario y clave.');
 
       const { data, error } = await _supabase
         .from('vendedores')
@@ -155,20 +180,39 @@
         .eq('clave', pass)
         .single();
 
-      if (error || !data) {
-        alert('Usuario o clave incorrectos.');
-        return;
-      }
+      if (error || !data) return alert('Usuario o clave incorrectos.');
 
       usuarioSesion = data;
       document.getElementById('vendedor-activo').textContent = data.nombre;
       document.getElementById('login-modal').classList.add('hidden');
+
+      if (data.rol === 'admin') {
+        document.getElementById('master-nav').classList.remove('hidden');
+        document.getElementById('badge-rol').classList.remove('hidden');
+      } else {
+        document.getElementById('master-nav').classList.add('hidden');
+        document.getElementById('badge-rol').classList.add('hidden');
+      }
     }
 
     function cerrarSesion() {
       usuarioSesion = null;
       document.getElementById('vendedor-activo').textContent = '---';
       document.getElementById('login-modal').classList.remove('hidden');
+      cambiarTab('pos');
+    }
+
+    function cambiarTab(tab) {
+      document.getElementById('view-pos').classList.add('hidden');
+      document.getElementById('view-ventas').classList.add('hidden');
+      document.getElementById('view-stock').classList.add('hidden');
+
+      if (tab === 'pos') document.getElementById('view-pos').classList.remove('hidden');
+      if (tab === 'ventas') {
+        document.getElementById('view-ventas').classList.remove('hidden');
+        cargarHistorialVentas();
+      }
+      if (tab === 'stock') document.getElementById('view-stock').classList.remove('hidden');
     }
 
     async function buscarPorCodigo(codigoInput) {
@@ -200,17 +244,11 @@
 
     function agregarAlCarrito() {
       if (!productoActual) return;
-      if (productoActual.stock_actual <= 0) {
-        alert('¡Atención! Este producto no tiene stock disponible.');
-        return;
-      }
+      if (productoActual.stock_actual <= 0) return alert('¡Producto sin stock!');
 
       const existe = carrito.find(p => p.id === productoActual.id);
       if (existe) {
-        if (existe.cantidad >= productoActual.stock_actual) {
-          alert('No podés agregar más del stock disponible.');
-          return;
-        }
+        if (existe.cantidad >= productoActual.stock_actual) return alert('Supera stock disponible.');
         existe.cantidad++;
       } else {
         carrito.push({ ...productoActual, cantidad: 1 });
@@ -275,14 +313,8 @@
     }
 
     async function completarVenta() {
-      if (!usuarioSesion) {
-        alert('Debés iniciar sesión para cobrar.');
-        return;
-      }
-      if (carrito.length === 0) {
-        alert('Agregá al menos una prenda para registrar la venta.');
-        return;
-      }
+      if (!usuarioSesion) return alert('Debés iniciar sesión.');
+      if (carrito.length === 0) return alert('Agregá al menos una prenda.');
 
       const totalVenta = carrito.reduce((acc, p) => acc + (p.precio_venta * p.cantidad), 0);
 
@@ -293,13 +325,9 @@
           medio_pago: medioPagoSeleccionado,
           cliente_contacto: `Vendedor: ${usuarioSesion.nombre}`
         }])
-        .select()
-        .single();
+        .select().single();
 
-      if (ventaErr) {
-        alert('Error al guardar la venta: ' + ventaErr.message);
-        return;
-      }
+      if (ventaErr) return alert('Error en venta: ' + ventaErr.message);
 
       for (const item of carrito) {
         await _supabase.from('detalle_ventas').insert([{
@@ -314,10 +342,60 @@
         }).eq('id', item.id);
       }
 
-      alert(`¡Venta cobrada con éxito por ${usuarioSesion.nombre}!`);
+      alert(`¡Venta cobrada con éxito! Total: $${totalVenta.toLocaleString()}`);
       carrito = [];
       document.getElementById('producto-card').classList.add('hidden');
       actualizarCarritoUI();
+    }
+
+    async function cargarHistorialVentas() {
+      const { data, error } = await _supabase
+        .from('ventas')
+        .select('*')
+        .order('fecha_venta', { ascending: false });
+
+      if (error) return;
+
+      const body = document.getElementById('tabla-ventas-body');
+      body.innerHTML = '';
+
+      data.forEach(v => {
+        const row = document.createElement('tr');
+        const fecha = new Date(v.fecha_venta).toLocaleString();
+        row.innerHTML = `
+          <td class="p-3 text-xs">${fecha}</td>
+          <td class="p-3 text-xs text-amber-400 font-semibold">${v.cliente_contacto || 'Gral'}</td>
+          <td class="p-3 text-xs">${v.medio_pago}</td>
+          <td class="p-3 text-xs font-bold text-right text-green-400">$${v.total.toLocaleString()}</td>
+        `;
+        body.appendChild(row);
+      });
+    }
+
+    async function guardarNuevoProducto() {
+      const cod = document.getElementById('new-codigo').value.trim();
+      const nom = document.getElementById('new-nombre').value.trim();
+      const cat = document.getElementById('new-categoria').value.trim();
+      const pre = parseFloat(document.getElementById('new-precio').value);
+      const stk = parseInt(document.getElementById('new-stock').value);
+
+      if (!cod || !nom || !pre || isNaN(stk)) return alert('Completá los campos obligatorios.');
+
+      const { error } = await _supabase.from('productos').insert([{
+        codigo_barras: cod,
+        nombre: nom,
+        categoria: cat,
+        precio_venta: pre,
+        stock_actual: stk
+      }]);
+
+      if (error) return alert('Error al cargar: ' + error.message);
+
+      alert('¡Producto guardado exitosamente!');
+      document.getElementById('new-codigo').value = '';
+      document.getElementById('new-nombre').value = '';
+      document.getElementById('new-precio').value = '';
+      document.getElementById('new-stock').value = '';
     }
 
     function toggleCamera() {
