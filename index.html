@@ -993,7 +993,7 @@ async function borrarHistorialVentas() {
 // --- FUNCIÓN PARA GENERAR E IMPRIMIR LA ETIQUETA QR DE UN PRODUCTO ---
 function imprimirEtiquetaQR(productoId, nombreProducto) {
   // Reemplaza 'tu-sitio.vercel.app' con el enlace real de tu aplicación desplegada
-  const urlDestino = `https://tu-sitio.vercel.app/producto.html?id=${productoId}`;
+  const urlDestino = `https://drees-outfit-app.vercel.app//producto.html?id=${productoId}`;
   
   // Genera el código QR utilizando la API pública
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlDestino)}`;
