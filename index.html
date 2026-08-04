@@ -844,7 +844,7 @@ async function borrarHistorialVentas() {
       }
     }
 
-    async function toggleCameraStock() {
+async function toggleCameraStock() {
       const container = document.getElementById('reader-stock-container');
       if (container.classList.contains('hidden')) {
         await apagarCamaras();
@@ -875,9 +875,10 @@ async function borrarHistorialVentas() {
       } else {
         await apagarCamaras();
       }
+    }
+
       // --- FUNCIÓN PARA REGISTRAR LA VENTA ---
 async function registrarVenta() {
-  // 1. Envía los datos a Supabase incluyendo la fecha y hora exacta actual
   const { data: venta, error: ventaErr } = await _supabase
     .from('ventas')
     .insert([
@@ -895,7 +896,6 @@ async function registrarVenta() {
     return alert('Error en venta: ' + ventaErr.message);
   }
 
-  // 2. Registro del detalle de los productos del carrito
   for (const item of carrito) {
     if (!item.esManual) {
       await _supabase.from('detalle_ventas').insert([
@@ -985,7 +985,8 @@ function imprimirEtiquetaQR(idProducto, nombreProducto) {
     win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Etiqueta</title></head><body style="text-align:center;font-family:Arial;padding-top:20px;"><div style="border:2px dashed #333;padding:20px;display:inline-block;border-radius:10px;"><h2 style="margin:0 0 10px 0;font-size:16px;">${nombreProducto}</h2><p style="font-size:11px;color:#555;margin:5px 0 15px 0;">Escaneá para ver precio y detalles</p><img src="${qr}" style="width:140px;height:140px;display:block;margin:0 auto;"></div><script>window.onload=()=>setTimeout(()=>window.print(),500);<\/script></body></html>`);
     win.document.close();
 }
-      // --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
+
+// --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
 async function borrarHistorialVentas() {
   const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
   if (!confirmar) return;
