@@ -975,9 +975,9 @@ async function exportarExcel() {
   document.body.removeChild(link);
 }
 
-   function imprimirEtiquetaQR(idProducto, nombreProducto) {
-  const urlDestino = `https://drees-outfit-app.vercel.app/producto.html?id=${idProducto}`;
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlDestino)}`;
+ function imprimirEtiquetaQR(idProducto, nombreProducto) {
+  const urlDestino = `[https://drees-outfit-app.vercel.app/producto.html?id=$](https://drees-outfit-app.vercel.app/producto.html?id=$){idProducto}`;
+  const qrImageUrl = `[https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=$](https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=$){encodeURIComponent(urlDestino)}`;
 
   const ventanaImpresion = window.open('', '_blank', 'width=400,height=600');
   if (!ventanaImpresion) return;
