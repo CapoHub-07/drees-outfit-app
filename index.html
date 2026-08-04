@@ -985,7 +985,7 @@ function imprimirEtiquetaQR(idProducto, nombreProducto) {
     win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Etiqueta</title></head><body style="text-align:center;font-family:Arial;padding-top:20px;"><div style="border:2px dashed #333;padding:20px;display:inline-block;border-radius:10px;"><h2 style="margin:0 0 10px 0;font-size:16px;">${nombreProducto}</h2><p style="font-size:11px;color:#555;margin:5px 0 15px 0;">Escaneá para ver precio y detalles</p><img src="${qr}" style="width:140px;height:140px;display:block;margin:0 auto;"></div><script>window.onload=()=>setTimeout(()=>window.print(),500);<\/script></body></html>`);
     win.document.close();
 }
-// --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
+      // --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
 async function borrarHistorialVentas() {
   const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
   if (!confirmar) return;
