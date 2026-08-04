@@ -975,14 +975,14 @@ async function exportarExcel() {
   document.body.removeChild(link);
 }
 
- function imprimirEtiquetaQR(idProducto, nombreProducto) {
-  const urlDestino = `[https://drees-outfit-app.vercel.app/producto.html?id=$](https://drees-outfit-app.vercel.app/producto.html?id=$){idProducto}`;
-  const qrImageUrl = `[https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=$](https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=$){encodeURIComponent(urlDestino)}`;
+function imprimirEtiquetaQR(idProducto, nombreProducto) {
+  const urlDestino = https://drees-outfit-app.vercel.app/producto.html?id=${idProducto};
+  const qrImageUrl = https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlDestino)};
 
   const ventanaImpresion = window.open('', '_blank', 'width=400,height=600');
   if (!ventanaImpresion) return;
   
-  ventanaImpresion.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Etiqueta - ${nombreProducto}</title><style>body{font-family:Arial,sans-serif;text-align:center;padding-top:20px;background:#fff;color:#000}.etiqueta{border:2px dashed #333;padding:20px;display:inline-block;border-radius:10px}h2{margin:0 0 10px 0;font-size:16px;font-weight:bold}p{margin:5px 0 15px 0;font-size:11px;color:#555}img{display:block;margin:0 auto;width:140px;height:140px}</style></head><body><div class="etiqueta"><h2>${nombreProducto}</h2><p>Escaneá para ver precio y detalles</p><img src="${qrImageUrl}" alt="QR"></div><script>window.onload=()=>setTimeout(()=>window.print(),500);</script></body></html>`);
+  ventanaImpresion.document.write(<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Etiqueta - ${nombreProducto}</title><style>body{font-family:Arial,sans-serif;text-align:center;padding-top:20px;background:#fff;color:#000}.etiqueta{border:2px dashed #333;padding:20px;display:inline-block;border-radius:10px}h2{margin:0 0 10px 0;font-size:16px;font-weight:bold}p{margin:5px 0 15px 0;font-size:11px;color:#555}img{display:block;margin:0 auto;width:140px;height:140px}</style></head><body><div class="etiqueta"><h2>${nombreProducto}</h2><p>Escaneá para ver precio y detalles</p><img src="${qrImageUrl}" alt="QR"></div><script>window.onload=()=>setTimeout(()=>window.print(),500);</script></body></html>);
   
   ventanaImpresion.document.close();
 }
