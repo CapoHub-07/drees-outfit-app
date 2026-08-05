@@ -310,7 +310,8 @@
           </table>
         </div>
       </section>
-    </div>
+    </di
+      v>
 
   </main>
 
@@ -1074,6 +1075,45 @@ async function borrarHistorialVentas() {
   cargarHistorialVentas();
 }
 
+  function toggleStockTotal() {
+  const panel = document.getElementById('panel-stock-total');
+  if (!panel) return;
+  if (panel.classList.contains('hidden')) {
+    panel.classList.remove('hidden');
+    cargarStockTotal();
+  } else {
+    panel.classList.add('hidden');
+  }
+}
+
+async function cargarStockTotal() {
+  const { data, error } = await _supabase.from('productos').select('*').order('nombre', { ascending: true });
+  
+  const tbody = document.getElementById('tabla-stock-total-body');
+  if (!tbody) return;
+
+  if (error || !data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay productos registrados</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  data.forEach(prod => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-slate-800 hover:bg-slate-800/50 text-xs text-slate-300';
+    tr.innerHTML = `
+      <td class="p-3 font-medium text-white">${prod.nombre || 'Sin nombre'}</td>
+      <td class="p-3 text-slate-400">${prod.codigo_barras || '-'}</td>
+      <td class="p-3 font-bold text-emerald-400">${prod.stock ?? 0}</td>
+      <td class="p-3 text-right">
+        <button onclick="imprimirEtiquetaQR('${prod.id}', '${prod.nombre}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg font-medium">
+          🖨️ Imprimir QR
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 // --- FUNCIÓN PARA CARGAR TODO EL STOCK EN LA TABLA ---
 async function cargarStockTotal() {
   const { data, error } = await _supabase.from('productos').select('*').order('nombre', { ascending: true });
