@@ -609,21 +609,32 @@
 
     // --- REPOSICIÓN DE STOCK EXISTENTE ---
 
-    async function buscarParaReponer() {
-      const code = document.getElementById('repo-codigo').value.trim();
-      if (!code) return;
+async function buscarParaReponer() {
+  const code = document.getElementById('repo-codigo').value.trim();
+  if (!code) return;
 
-      const { data, error } = await _supabase
-        .from('productos')
-        .select('*')
-        .eq('codigo_barras', code)
-        .single();
+  const { data, error } = await _supabase
+    .from('productos')
+    .select('*')
+    .eq('codigo_barras', code)
+    .limit(1); // Cambiamos .single() por .limit(1) para evitar que rompa si hay dudas
 
-      if (error || !data) {
-        alert('Producto no encontrado.');
-        document.getElementById('repo-card').classList.add('hidden');
-        return;
-      }
+  if (error || !data || data.length === 0) {
+    alert('Producto no encontrado.');
+    document.getElementById('repo-card').classList.add('hidden');
+    return;
+  }
+
+  const producto = data[0];
+  productoRepoActual = producto;
+
+  // Mostramos los datos en la tarjeta
+  document.getElementById('repo-nombre').innerText = producto.nombre;
+  document.getElementById('repo-stock').innerText = producto.stock ?? 0;
+  
+  // Si agregaste un espacio o contenedor para el botón de QR en la tarjeta, lo actualizamos aquí:
+  document.getElementById('repo-card').classList.remove('hidden');
+}
 
       productoRepoActual = data;
       document.getElementById('repo-nombre').textContent = data.nombre;
