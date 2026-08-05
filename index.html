@@ -632,16 +632,9 @@ async function buscarParaReponer() {
   document.getElementById('repo-nombre').innerText = producto.nombre;
   document.getElementById('repo-stock').innerText = producto.stock ?? 0;
   
-  // Si agregaste un espacio o contenedor para el botón de QR en la tarjeta, lo actualizamos aquí:
   document.getElementById('repo-card').classList.remove('hidden');
 
 }
-      productoRepoActual = data;
-      document.getElementById('repo-nombre').textContent = data.nombre;
-      document.getElementById('repo-stock-actual').textContent = data.stock_actual;
-      document.getElementById('repo-cantidad-sumar').value = 1;
-      document.getElementById('repo-card').classList.remove('hidden');
-    }
 
     async function confirmarReposicion() {
       if (!productoRepoActual) return;
