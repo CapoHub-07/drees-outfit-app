@@ -1126,6 +1126,7 @@ async function imprimirEtiquetaQR(idProducto, nombreProducto) {
   const win = window.open('', '_blank', 'width=400,height=600');
   if (!win) return;
 
+  // AQUÍ RECIÉN EMPIEZA EL DOCUMENT WRITE PROTEGIDO DENTRO DE LA FUNCIÓN
   win.document.write(`
     <!DOCTYPE html>
     <html lang="es">
