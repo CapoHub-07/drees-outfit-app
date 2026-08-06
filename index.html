@@ -1045,34 +1045,29 @@ async function exportarExcel() {
   document.body.removeChild(link); 
 }
 
-// --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
-async function borrarHistorialVentas() {
-  const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
+async function borrarHistorial() {
+  const confirmar = confirm('¿Estás seguro de que deseas borrar todo el historial?');
   if (!confirmar) return;
 
-  const { error } = await _supabase.from('ventas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  const { error } = await _supabase
+    .from('historial') // Reemplaza 'historial' por el nombre exacto de tu tabla en Supabase si es diferente
+    .delete()
+    .neq('id', 0); // Condición para borrar los registros
 
   if (error) {
-    console.error("Error al borrar historial:", error.message);
-    alert("Hubo un error al borrar el historial.");
+    alert('Hubo un error al intentar borrar el historial.');
+    console.error(error);
     return;
   }
 
-  alert("Historial borrado con éxito.");
-  cargarHistorialVentas();
-}
-
-function toggleStockTotal() {
-  const panel = document.getElementById('panel-stock-total');
-  if (!panel) return;
-  if (panel.classList.contains('hidden')) {
-    panel.classList.remove('hidden');
-    cargarStockTotal();
-  } else {
-    panel.classList.add('hidden');
-  }
+  alert('Historial borrado con éxito.');
   
-// --- FUNCIÓN PARA CARGAR TODO EL STOCK EN LA TABLA ---
+  // Si tienes una función para recargar la tabla en pantalla, la llamas aquí:
+  if (typeof cargarHistorial === 'function') {
+    cargarHistorial();
+  }
+}
+  
 async function cargarStockTotal() {
   const { data, error } = await _supabase.from('productos').select('*').order('nombre', { ascending: true });
   
@@ -1082,6 +1077,7 @@ async function cargarStockTotal() {
   if (error || !data || data.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay productos registrados</td></tr>`;
     return;
+  }
 
   tbody.innerHTML = '';
   data.forEach(prod => {
@@ -1098,6 +1094,8 @@ async function cargarStockTotal() {
       </td>
     `;
     tbody.appendChild(tr);
+  });
+}
     
 // Ejecutar al iniciar la página para que la tabla tenga datos
 window.addEventListener('DOMContentLoaded', () => {
