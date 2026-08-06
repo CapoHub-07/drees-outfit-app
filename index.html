@@ -238,7 +238,26 @@
     </div>
   </section>
 
- 
+    <!-- CARGAR NUEVO PRODUCTO DESDE CERO -->
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-amber-400">➕ Agregar Nuevo Producto (Primera Vez)</h2>
+          <button onclick="toggleCameraStock()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition">📷 Escanear Código</button>
+        </div>
+
+        <div id="reader-stock-container" class="hidden mb-2 overflow-hidden rounded-xl border border-indigo-500/30 bg-black relative">
+          <div id="reader-stock" class="w-full"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input type="text" id="new-codigo" placeholder="Código de Barras (Escaneá o escribí)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-400">
+          <input type="text" id="new-nombre" placeholder="Nombre (ej: Remera Negra Oversize)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
+          <input type="text" id="new-categoria" placeholder="Categoría (ej: REMERAS)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
+          <input type="number" id="new-precio" placeholder="Precio Venta (ej: 25000)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
+          <input type="number" id="new-stock" placeholder="Stock Inicial (ej: 10)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
+        </div>
+        <button onclick="guardarNuevoProducto()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition mt-2">Guardar Producto en Inventario</button>
+      </section>
 
 </div> <!-- FIN DE VISTA 3 -->
       
@@ -267,26 +286,7 @@
   </div>
 </section>
       
-      <!-- CARGAR NUEVO PRODUCTO DESDE CERO -->
-      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
-        <div class="flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-amber-400">➕ Agregar Nuevo Producto (Primera Vez)</h2>
-          <button onclick="toggleCameraStock()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition">📷 Escanear Código</button>
-        </div>
-
-        <div id="reader-stock-container" class="hidden mb-2 overflow-hidden rounded-xl border border-indigo-500/30 bg-black relative">
-          <div id="reader-stock" class="w-full"></div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input type="text" id="new-codigo" placeholder="Código de Barras (Escaneá o escribí)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-400">
-          <input type="text" id="new-nombre" placeholder="Nombre (ej: Remera Negra Oversize)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
-          <input type="text" id="new-categoria" placeholder="Categoría (ej: REMERAS)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
-          <input type="number" id="new-precio" placeholder="Precio Venta (ej: 25000)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
-          <input type="number" id="new-stock" placeholder="Stock Inicial (ej: 10)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
-        </div>
-        <button onclick="guardarNuevoProducto()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition mt-2">Guardar Producto en Inventario</button>
-      </section>
+    
 
       <!-- TABLA STOCK CRÍTICO -->
       <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-3">
