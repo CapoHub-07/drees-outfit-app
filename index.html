@@ -1137,7 +1137,7 @@ async function imprimirEtiquetaQR(idProducto, nombreProducto) {
     <body class="bg-white p-6 flex flex-col items-center justify-center text-slate-800">
       <div class="border-2 border-dashed border-slate-300 p-4 rounded-xl text-center space-y-2 w-64">
         <h2 class="font-bold text-sm uppercase">${producto.nombre}</h2>
-        <p class="text-xs text-slate-600">Talle: <b>${producto.talle || "Único"}</b> | Color: <b>${producto.color || 'N/A'}</b></p>
+        <p class="text-xs text-slate-600">Talle: <b>${producto.talle || "Único"}</b> | Color: <b>${producto.color || "N/A"}</b></p>
         
         <div class="flex justify-center my-2">
           <img src="${qrUrl}" alt="Código QR" class="w-36 h-36">
@@ -1147,9 +1147,6 @@ async function imprimirEtiquetaQR(idProducto, nombreProducto) {
       </div>
       <script>
         window.onload = function() { window.print(); }
-      </script>
-    </body>
-    </html>
   `);
   win.document.close();
 }
