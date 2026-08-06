@@ -1107,7 +1107,8 @@ async function cargarStockTotal() {
 window.addEventListener('DOMContentLoaded', () => {
   cargarStockTotal();
 });
-    async function imprimirEtiquetaQR(idProducto, nombreProducto) {
+// --- FUNCIÓN PARA IMPRIMIR ETIQUETA QR ---
+async function imprimirEtiquetaQR(idProducto, nombreProducto) {
   const { data: producto, error } = await _supabase
     .from('productos')
     .select('*')
@@ -1146,7 +1147,10 @@ window.addEventListener('DOMContentLoaded', () => {
       </div>
       <script>
         window.onload = function() { window.print(); }
-         `);
+      </script>
+    </body>
+    </html>
+  `);
   win.document.close();
 }
       </script>
