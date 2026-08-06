@@ -1042,28 +1042,7 @@ async function exportarExcel() {
   link.setAttribute("download", "historial_ventas.csv");
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-}
-
-async function imprimirEtiquetaQR(idProducto, nombreProducto) {
-  const { data: producto, error } = await _supabase
-    .from('productos')
-    .select('*')
-    .eq('id', idProducto)
-    .single();
-
-  if (error || !producto) {
-    alert('No se pudo cargar la información para la etiqueta.');
-    return;
-  }
-
-  const urlWeb = `https://drees-outfit-app.vercel.app/producto.html?id=${idProducto}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlWeb)}`;
-
-  const win = window.open('', '_blank', 'width=400,height=600');
-  if (!win) return;
-
- 
+  document.body.removeChild(link); 
 }
 
 // --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
