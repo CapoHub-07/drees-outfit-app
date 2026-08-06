@@ -1107,7 +1107,7 @@ async function cargarStockTotal() {
 window.addEventListener('DOMContentLoaded', () => {
   cargarStockTotal();
 });
-// --- FUNCIÓN PARA IMPRIMIR ETIQUETA QR ---
+    
 async function imprimirEtiquetaQR(idProducto, nombreProducto) {
   const { data: producto, error } = await _supabase
     .from('productos')
