@@ -1119,33 +1119,7 @@ async function imprimirEtiquetaQR(idProducto, nombreProducto) {
 
   const win = window.open('', '_blank', 'width=400,height=600');
   if (!win) return;
-
-  // El script de impresión queda estrictamente confinado dentro de la ventana emergente
-  win.document.write(`<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Etiqueta - ${producto.nombre}</title>
-    <script src="https://tailwindcss.com"></script>
-</head>
-<body class="bg-white p-6 flex flex-col items-center justify-center text-slate-800">
-    <div class="border-2 border-dashed border-slate-300 p-4 rounded-xl text-center space-y-2 w-64">
-        <h2 class="font-bold text-sm uppercase">${producto.nombre}</h2>
-        <p class="text-xs text-slate-600">Talle: <b>${producto.talle || "Único"}</b> | Color: <b>${producto.color || "N/A"}</b></p>
-        <div class="flex justify-center my-2">
-            <img src="${qrUrl}" alt="Código QR" class="w-36 h-36">
-        </div>
-        <p class="text-[10px] text-slate-400">Escaneá para ver precio y stock actual</p>
-    </div>
-
-    <script>
-        window.onload = function() {
-            window.print();
-        };
+  
     </script>
 </body>
-</html>`);
-
-  win.document.close();
-}
-
+</html>`
