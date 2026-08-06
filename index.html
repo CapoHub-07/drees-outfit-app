@@ -1120,7 +1120,8 @@ async function imprimirEtiquetaQR(idProducto, nombreProducto) {
   const win = window.open('', '_blank', 'width=400,height=600');
   if (!win) return;
 
-win.document.write(`<!DOCTYPE html>
+  // Todo el HTML de la etiqueta debe cerrarse estrictamente dentro de los backticks (``)
+  win.document.write(`<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1141,10 +1142,9 @@ win.document.write(`<!DOCTYPE html>
         window.onload = function() {
             window.print();
         };
-   `);
-win.document.close();
-
-}
- </script>
+    </script>
 </body>
-</html>
+</html>`);
+
+  win.document.close();
+}
