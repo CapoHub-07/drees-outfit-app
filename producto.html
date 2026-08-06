@@ -11,8 +11,8 @@
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
 
-  <div class="bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
-    <h2 class="text-xs uppercase tracking-widest text-amber-400 font-semibold mb-2">DreesOutfit</h2>
+  <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl shadow-xl w-full max-w-sm text-center space-y-4">
+    <h2 class="text-xs uppercase tracking-widest text-amber-400 font-semibold">DreesOutfit</h2>
     
     <!-- Contenedor donde se cargarán los datos dinámicos -->
     <div id="detalles-producto" class="space-y-4">
@@ -24,13 +24,12 @@
   </div>
 
   <script>
-    // Inicializa tu cliente de Supabase (reemplaza con tus credenciales reales si difieren)
+    // Inicializa tu cliente de Supabase
     const SUPABASE_URL = 'https://zzmojfukciqbxrjnmdeo.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function cargarDatosPublicosProducto() {
-      // Obtenemos el ID de la prenda desde la URL (ej: producto.html?id=123)
       const params = new URLSearchParams(window.location.search);
       const productoId = params.get('id');
       const contenedor = document.getElementById('detalles-producto');
@@ -52,14 +51,29 @@
         return;
       }
 
-      // Mostramos los datos reales en pantalla
+      // Mostramos todos los datos reales incluyendo Stock, Talle y Color
       contenedor.innerHTML = `
-        <h1 class="text-2xl font-bold text-white">${data.nombre || 'Prenda sin nombre'}</h1>
-        <p class="text-3xl font-extrabold text-emerald-400 mt-2">$${Number(data.precio_venta || 0).toLocaleString()}</p>
-        <p class="text-xs text-slate-400 mt-2">Código: ${data.codigo_barras || '-'}</p>
-        <div class="mt-6 pt-4 border-t border-slate-700 text-xs text-slate-500">
-          Consultado desde el sistema oficial
+        <h1 class="text-xl font-bold text-white uppercase">${data.nombre || 'Prenda sin nombre'}</h1>
+        
+        <!-- Atributos: Talle y Color -->
+        <div class="grid grid-cols-2 gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-700 text-xs text-slate-300">
+          <div><span class="text-slate-500 block">Talle</span> <b class="text-white text-sm">${data.talle || 'Único'}</b></div>
+          <div><span class="text-slate-500 block">Color</span> <b class="text-white text-sm">${data.color || 'N/A'}</b></div>
         </div>
+
+        <!-- Stock Actual -->
+        <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700">
+          <p class="text-xs text-slate-400">Stock Disponible</p>
+          <p class="text-3xl font-black text-indigo-400">${data.stock_actual ?? 0}</p>
+        </div>
+
+        <!-- Precio -->
+        <div>
+          <p class="text-xs text-slate-400">Precio Actual</p>
+          <p class="text-3xl font-extrabold text-emerald-400">$${Number(data.precio_venta || 0).toLocaleString()}</p>
+        </div>
+
+        <p class="text-[10px] text-slate-500 pt-2 border-t border-slate-700">Código: ${data.codigo_barras || '-'}</p>
       `;
     }
 
