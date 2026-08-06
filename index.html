@@ -1114,19 +1114,19 @@ async function imprimirEtiquetaQR(idProducto, nombreProducto) {
     return;
   }
 
-  const urlWeb = `https://drees-outfit-app.vercel.app/producto.html?id=${idProducto}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlWeb)}`;
+  const urlWeb = `https://vercel.app{idProducto}`;
+  const qrUrl = `https://qrserver.com{encodeURIComponent(urlWeb)}`;
 
   const win = window.open('', '_blank', 'width=400,height=600');
   if (!win) return;
 
-  // Todo el HTML de la etiqueta debe cerrarse estrictamente dentro de los backticks (``)
+  // El script de impresión queda estrictamente confinado dentro de la ventana emergente
   win.document.write(`<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Etiqueta - ${producto.nombre}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://tailwindcss.com"></script>
 </head>
 <body class="bg-white p-6 flex flex-col items-center justify-center text-slate-800">
     <div class="border-2 border-dashed border-slate-300 p-4 rounded-xl text-center space-y-2 w-64">
@@ -1148,3 +1148,4 @@ async function imprimirEtiquetaQR(idProducto, nombreProducto) {
 
   win.document.close();
 }
+
