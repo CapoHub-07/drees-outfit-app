@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detalle del Producto - DreesOutfit</title>
-  <!-- Tailwind CSS para diseño moderno -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SDK de Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
@@ -14,7 +12,6 @@
   <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl shadow-xl w-full max-w-sm text-center space-y-4">
     <h2 class="text-xs uppercase tracking-widest text-amber-400 font-semibold">DreesOutfit</h2>
     
-    <!-- Contenedor donde se cargarán los datos dinámicos -->
     <div id="detalles-producto" class="space-y-4">
       <div class="animate-pulse">
         <div class="h-6 bg-slate-700 rounded w-3/4 mx-auto mb-3"></div>
@@ -24,7 +21,6 @@
   </div>
 
   <script>
-    // Inicializa tu cliente de Supabase
     const SUPABASE_URL = 'https://zzmojfukciqbxrjnmdeo.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -39,7 +35,6 @@
         return;
       }
 
-      // Buscamos el producto en la base de datos
       const { data, error } = await _supabase
         .from('productos')
         .select('*')
@@ -51,23 +46,19 @@
         return;
       }
 
-      // Mostramos todos los datos reales incluyendo Stock, Talle y Color
       contenedor.innerHTML = `
         <h1 class="text-xl font-bold text-white uppercase">${data.nombre || 'Prenda sin nombre'}</h1>
         
-        <!-- Atributos: Talle y Color -->
         <div class="grid grid-cols-2 gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-700 text-xs text-slate-300">
           <div><span class="text-slate-500 block">Talle</span> <b class="text-white text-sm">${data.talle || 'Único'}</b></div>
           <div><span class="text-slate-500 block">Color</span> <b class="text-white text-sm">${data.color || 'N/A'}</b></div>
         </div>
 
-        <!-- Stock Actual -->
         <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700">
           <p class="text-xs text-slate-400">Stock Disponible</p>
           <p class="text-3xl font-black text-indigo-400">${data.stock_actual ?? 0}</p>
         </div>
 
-        <!-- Precio -->
         <div>
           <p class="text-xs text-slate-400">Precio Actual</p>
           <p class="text-3xl font-extrabold text-emerald-400">$${Number(data.precio_venta || 0).toLocaleString()}</p>
