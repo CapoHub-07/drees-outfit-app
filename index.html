@@ -676,7 +676,7 @@ async function buscarParaReponer() {
     async function confirmarReposicion() {
       if (!productoRepoActual) return;
 
-      const sumar = parseInt(document.getElementById('repo-cantidad-sumar').value);
+      const sumar = parseInt(document.getElementById('repo-cantidad').value);
       if (isNaN(sumar) || sumar <= 0) return alert('Ingresá una cantidad válida a sumar.');
 
       const nuevoStock = productoRepoActual.stock_actual + sumar;
