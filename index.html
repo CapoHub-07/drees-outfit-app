@@ -255,7 +255,7 @@
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm text-slate-300">
-            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
+           <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
               <tr>
                 <th class="p-3">Código</th>
                 <th class="p-3">Producto</th>
@@ -263,8 +263,11 @@
                 <th class="p-3 text-center">Color</th>
                 <th class="p-3 text-right">Precio</th>
                 <th class="p-3 text-center">Stock</th>
+                <!-- AQUÍ VA LA LÍNEA NUEVA -->
+                <th class="p-3 text-center">Acciones</th>
               </tr>
             </thead>
+
             <tbody id="tabla-stock-total-body" class="divide-y divide-slate-700"></tbody>
           </table>
         </div>
@@ -706,10 +709,21 @@
           color: 'N/A'
         }]);
 
-      if (error) {
-        alert('Error al guardar el producto: ' + error.message);
-      } else {
-        alert('🎉 Producto guardado en el inventario con éxito.');
+// Reemplaza el bloque de éxito dentro de guardarNuevoProducto() por este:
+if (error) {
+  if (error.code === '23505') {
+    return alert('Ese código de barras ya existe. Si querés sumarle stock, usá el panel verde de Reponer Stock.');
+  }
+  return alert('Error al cargar: ' + error.message);
+}
+
+alert('¡Producto guardado exitosamente!');
+
+// Preguntar al usuario si desea imprimir la etiqueta del producto recién creado
+if (confirm(`¿Querés imprimir la etiqueta QR para ${nom} ahora?`)) {
+  imprimirEtiquetaQR(cod, nom, pre, 'Único', 'N/A'); 
+}
+
         document.getElementById('new-codigo').value = '';
         document.getElementById('new-nombre').value = '';
         document.getElementById('new-categoria').value = '';
@@ -879,18 +893,109 @@
           ? `<span class="px-2.5 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400 border border-red-500/30">${p.stock_actual} un.</span>`
           : `<span class="px-2.5 py-0.5 rounded-full font-bold bg-green-500/20 text-green-400 border border-green-500/30">${p.stock_actual} un.</span>`;
 
-        row.innerHTML = `
-          <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
-          <td class="p-3 text-xs font-bold text-white">${p.nombre} <br><span class="text-[10px] text-slate-500 font-normal uppercase">${p.categoria || 'Gral'}</span></td>
-          <td class="p-3 text-xs text-center text-slate-300 font-semibold">${p.talle || '-'}</td>
-          <td class="p-3 text-xs text-center text-slate-300">${p.color || '-'}</td>
-          <td class="p-3 text-xs text-right font-bold text-amber-400">$${(p.precio_venta || 0).toLocaleString()}</td>
-          <td class="p-3 text-xs text-center">${badgeStock}</td>
-        `;
+             row.innerHTML = `
+        <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
+        <td class="p-3 text-xs font-bold text-white">${p.nombre} <br><span class="text-[10px] text-slate-500 font-normal uppercase">${p.categoria || 'Gral'}</span></td>
+        <td class="p-3 text-xs text-center text-slate-300 font-semibold">${p.talle || '-'}</td>
+        <td class="p-3 text-xs text-center text-slate-300">${p.color || '-'}</td>
+        <td class="p-3 text-xs text-right font-bold text-amber-400">$${(p.precio_venta || 0).toLocaleString()}</td>
+        <td class="p-3 text-xs text-center">${badgeStock}</td>
+        <td class="p-3 text-xs text-center">
+          <button onclick="imprimirEtiquetaQR('${p.codigo_barras}', '${p.nombre}', ${p.precio_venta}, '${p.talle || '-'}', '${p.color || '-'}')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-2 py-1 rounded transition-colors text-[10px]">
+            🖨️ Imprimir QR
+          </button>
+        </td>
+      `;
+      
+      tbody.appendChild(row);
+    });
+  }
+
+
         
         tbody.appendChild(row);
       });
     }
+    function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
+  // Creamos el texto estructurado que leerá cualquier celular al escanear con la cámara
+  const textoQR = `DREES OUTFIT\nProducto: ${nombre}\nPrecio: $${precio.toLocaleString()}\nTalle: ${talle}\nColor: ${color}\nCódigo: ${codigo}`;
+  
+  // URL de la API de Google para generar el gráfico del código QR de forma inmediata
+  const urlGoogleQR = `https://googleapis.com{encodeURIComponent(textoQR)}&choe=UTF-8`;
+
+  // Abrimos una pestaña temporal para estructurar la visualización de la etiqueta
+  const ventanaImpresion = window.open('', '_blank', 'width=400,height=400');
+  
+  ventanaImpresion.document.write(`
+    <html>
+      <head>
+        <title>Etiqueta QR - ${nombre}</title>
+        <style>
+          body { 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            text-align: center; 
+            margin: 0; 
+            padding: 10px;
+            color: #000;
+          }
+          .etiqueta-box {
+            border: 2px dashed #000;
+            padding: 15px;
+            display: inline-block;
+            width: 260px;
+            background: #fff;
+          }
+          .marca { 
+            font-size: 14px; 
+            font-weight: 900; 
+            letter-spacing: 2px; 
+            margin-bottom: 2px;
+          }
+          .detalle { 
+            font-size: 11px; 
+            color: #444; 
+            margin-bottom: 8px;
+          }
+          .qr-img { 
+            width: 140px; 
+            height: 140px; 
+            margin: 5px 0;
+          }
+          .precio { 
+            font-size: 20px; 
+            font-weight: bold; 
+            margin-top: 4px;
+          }
+          .caracteristicas {
+            font-size: 10px;
+            color: #555;
+            margin-bottom: 4px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="etiqueta-box">
+          <div class="marca">DREES OUTFIT</div>
+          <div class="detalle">${nombre}</div>
+          <div class="caracteristicas">Talle: ${talle} | Color: ${color}</div>
+          <img class="qr-img" src="${urlGoogleQR}" alt="Código QR del Producto" />
+          <div class="precio">$${precio.toLocaleString()}</div>
+          <div style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">${codigo}</div>
+        </div>
+        <script>
+          // Espera a que cargue la imagen del QR de Google y manda a imprimir automáticamente
+          window.onload = function() {
+            window.print();
+            setTimeout(function() { window.close(); }, 500);
+          };
+        <\/script>
+      </body>
+    </html>
+  `);
+  
+  ventanaImpresion.document.close();
+}
+
 
   </script>
 </body>
