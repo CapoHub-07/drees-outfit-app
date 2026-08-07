@@ -913,10 +913,7 @@
     }
 
     function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
-      // Texto estructurado para lectura desde cualquier smartphone convencional
       const textoQR = `DREES OUTFIT\nProducto: ${nombre}\nPrecio: $${precio.toLocaleString()}\nTalle: ${talle}\nColor: ${color}\nCódigo: ${codigo}`;
-      
-      // API Oficial restaurada con su dominio completo para la carga del gráfico QR
       const urlGoogleQR = `https://googleapis.com{encodeURIComponent(textoQR)}&choe=UTF-8`;
 
       const ventanaImpresion = window.open('', '_blank', 'width=400,height=400');
@@ -973,15 +970,28 @@
               <div class="marca">DREES OUTFIT</div>
               <div class="detalle">${nombre}</div>
               <div class="caracteristicas">Talle: ${talle} | Color: ${color}</div>
-              <img class="qr-img" src="${urlGoogleQR}" alt="Código QR del Producto" />
+              <!-- Se añade un id para controlar la carga de la imagen -->
+              <img id="img-codigo-qr" class="qr-img" src="${urlGoogleQR}" alt="Código QR" />
               <div class="precio">$${precio.toLocaleString()}</div>
               <div style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">${codigo}</div>
             </div>
             <script>
-              window.onload = function() {
-                window.print();
-                setTimeout(function() { window.close(); }, 500);
-              };
+              // CORRECCIÓN CRÍTICA: Esperamos a que la imagen se descargue físicamente y damos un delay de seguridad de 600ms antes de imprimir
+              const imagenQR = document.getElementById('img-codigo-qr');
+              
+              function dispararImpresion() {
+                setTimeout(function() {
+                  window.print();
+                  setTimeout(function() { window.close(); }, 500);
+                }, 600);
+              }
+
+              // Si la imagen ya se descargó al cargar el DOM, o cuando termine de hacerlo
+              if (imagenQR.complete) {
+                dispararImpresion();
+              } else {
+                imagenQR.onload = dispararImpresion;
+              }
             <\/script>
           </body>
         </html>
@@ -989,6 +999,7 @@
       
       ventanaImpresion.document.close();
     }
+
 
   </script>
 </body>
