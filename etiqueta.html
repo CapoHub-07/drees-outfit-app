@@ -32,7 +32,7 @@
       width: 140px; 
       height: 140px; 
     }
-    #canvas-qr svg {
+    #img-qr {
       width: 140px;
       height: 140px;
     }
@@ -55,72 +55,52 @@
     <div id="lbl-nombre" class="marca" style="font-size:12px; font-weight:normal; letter-spacing:normal;">Cargando...</div>
     <div id="lbl-caracteristicas" class="caracteristicas">Talle: - | Color: -</div>
     
-    <!-- Contenedor del QR Nativo Vectorial -->
-    <div id="canvas-qr"></div>
+    <!-- Contenedor donde se pintará el QR Dinámico -->
+    <div id="canvas-qr">
+      <img id="img-qr" src="" alt="Código QR Dinámico" />
+    </div>
     
     <div id="lbl-precio" class="precio">$0</div>
     <div id="lbl-codigo" style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">-</div>
   </div>
 
   <script>
-    // --- GENERADOR VECTORIAL QR NATIVO (DIBUJA EL LINK EN LA PÁGINA) ---
-    function generarQR_SVG(texto) {
-      const size = 21; 
-      let svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" shape-rendering="crispEdges">';
-      svg += '<rect width="' + size + '" height="' + size + '" fill="#ffffff"/>';
-      
-      let semilla = 0;
-      for (let i = 0; i < texto.length; i++) semilla += texto.charCodeAt(i);
-      
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size; c++) {
-          const esEsquina = (r < 7 && c < 7) || (r < 7 && c > size - 8) || (r > size - 8 && c < 7);
-          const esCentroEsquina = (r > 1 && r < 5 && c > 1 && c < 5) || (r > 1 && r < 5 && c > size - 6 && c < size - 2) || (r > size - 6 && r < size - 2 && c > 1 && c < 5);
-          
-          if (esEsquina) {
-            if ((r === 0 || r === 6 || c === 0 || c === 6) || (r === size-1 || r === size-7 || c === 0 || c === 6) || (r === 0 || r === 6 || c === size-1 || c === size-7)) {
-              svg += '<rect x="' + c + '" y="' + r + '" width="1" height="1" fill="#000000"/>';
-            } else if (esCentroEsquina) {
-              svg += '<rect x="' + c + '" y="' + r + '" width="1" height="1" fill="#000000"/>';
-            }
-          } else {
-            const pseudoBit = Math.abs(Math.sin(r * c + semilla)) > 0.45;
-            if (pseudoBit && r > 2 && c > 2 && r < size - 2 && c < size - 2) {
-              svg += '<rect x="' + c + '" y="' + r + '" width="1" height="1" fill="#000000"/>';
-            } else if ((r + c) % 3 === 0 && (r > 6 || c > 6)) {
-              svg += '<rect x="' + c + '" y="' + r + '" width="1" height="1" fill="#000000"/>';
-            }
-          }
-        }
-      }
-      svg += '</svg>';
-      return svg;
-    }
-
-    // 1. Leemos los parámetros que viajan por la URL de forma segura
+    // 1. Leemos los parámetros que viajan por la URL desde el index.html
     const urlParams = new URLSearchParams(window.location.search);
     const codigo = urlParams.get('codigo') || '000000';
     const nombre = urlParams.get('nombre') || 'Producto';
     const precio = parseFloat(urlParams.get('precio')) || 0;
     const talle = urlParams.get('talle') || '-';
     const color = urlParams.get('color') || '-';
-    // Si viene la URL larga de consulta desde el index, la usamos; si no, creamos una de respaldo
+    
+    // Capturamos el enlace dinámico que te lleva a consulta.html
     const urlQR_Dinamico = urlParams.get('urlqr') || (window.location.origin + '/consulta.html?codigo=' + codigo);
 
-    // 2. Inyectamos los datos reales de la prenda en la plantilla visual
+    // 2. Inyectamos los datos reales de la prenda en la pantalla visual
     document.getElementById('lbl-nombre').textContent = nombre;
     document.getElementById('lbl-caracteristicas').textContent = 'Talle: ' + talle + ' | Color: ' + color;
     document.getElementById('lbl-precio').textContent = '$' + precio.toLocaleString('es-AR');
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // 3. Pintamos el código QR vectorial usando el link inteligente de internet
-    document.getElementById('canvas-qr').innerHTML = generarQR_SVG(urlQR_Dinamico);
+    // 3. Generamos el QR Dinámico usando la API global de QRServer (Formato seguro)
+    const imgElement = document.getElementById('img-qr');
+    imgElement.src = 'https://qrserver.com' + encodeURIComponent(urlQR_Dinamico);
 
-    // 4. Mandamos a imprimir
+    // 4. Esperamos a que la imagen del enlace se dibuje físicamente en la pantalla antes de mandar a imprimir
+    imgElement.onload = function() {
+      setTimeout(function() {
+        window.print();
+        setTimeout(function() { window.close(); }, 500);
+      }, 500);
+    };
+
+    // Respaldo por si hay microcortes de conexión
     setTimeout(function() {
-      window.print();
-      setTimeout(function() { window.close(); }, 600);
-    }, 400);
+      if (!imgElement.complete) {
+        window.print();
+        setTimeout(function() { window.close(); }, 500);
+      }
+    }, 2500);
   </script>
 </body>
 </html>
