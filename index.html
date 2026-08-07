@@ -32,21 +32,6 @@
       </div>
     </div>
   </div>
-  <script>
-function iniciarSesion() {
-    const usuario = document.getElementById('login-user').value;
-    const contrasena = document.getElementById('login-pass').value;
-
-    // Validación básica de prueba
-    if (usuario === "Admin" && contrasena === "1234") {
-        alert("¡Ingreso correcto!");
-        // Oculta el modal si los datos son correctos
-        document.getElementById('login-modal').classList.add('hidden');
-    } else {
-        alert("Usuario o contraseña incorrectos");
-    }
-}
-</script>
 
   <!-- HEADER -->
   <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
@@ -150,110 +135,73 @@ function iniciarSesion() {
         </div>
       </section>
     </div>
- 
-   <!-- VISTA 2: HISTORIAL DE VENTAS -->
-<div id="view-ventas" class="hidden space-y-4">
-  <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
-    <div class="flex justify-between items-center mb-2">
-      <h2 class="text-lg font-semibold text-amber-400">📊 Registro General de Ventas</h2>
-      <button onclick="cargarHistorialVentas()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300">🔄 Actualizar</button>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm text-slate-300">
-        <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
-          <tr>
-            <th class="p-3">Fecha/Hora</th>
-            <th class="p-3">Vendedor</th>
-            <th class="p-3">Medio Pago</th>
-            <th class="p-3 text-right">Total</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-ventas-body" class="divide-y divide-slate-700"></tbody>
-      </table>
-    </div>
-    
-    <!-- Botones de Acción del Historial -->
-    <div class="flex gap-2 pt-2 border-t border-slate-700/50">
-      <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
-        📊 Exportar Excel
-      </button>
-      <button onclick="borrarHistorialVentas()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
-        🗑️ Borrar Historial
-      </button>
-    </div>
-  </section>
+    <div class="flex gap-2 mb-4">
+  <!-- Botón Exportar a Excel -->
+  <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
+    📊 Exportar Excel
+  </button>
+
+  <!-- Botón Borrar Historial -->
+  <button onclick="borrarHistorialVentas()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
+    🗑️ Borrar Historial
+  </button>
 </div>
 
-<!-- VISTA 3: GESTIÓN DE STOCK, REPOSICIÓN & ALERTAS -->
-<div id="view-stock" class="hidden space-y-6">
-
-  <!-- BOTÓN PARA DESPLEGAR EL STOCK TOTAL -->
-  <div>
-    <button onclick="toggleStockTotal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg">
-      📊 Ver Stock Total e Inventario QR
-    </button>
-  </div>
-
-  <!-- PANEL OCULTO DE STOCK TOTAL -->
-  <section id="panel-stock-total" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
-    <div class="flex justify-between items-center">
-      <h2 class="text-lg font-semibold text-white flex items-center gap-2">📦 Inventario Completo y Etiquetas</h2>
-      <button onclick="cargarStockTotal()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium">
-        Actualizar Lista
-      </button>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="border-b border-slate-700 text-slate-400 text-xs">
-            <th class="p-3">Producto</th>
-            <th class="p-3">Código</th>
-            <th class="p-3">Stock</th>
-            <th class="p-3 text-right">Acción</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-stock-total-body">
-          <tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">Cargando inventario...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- PANEL DE REPOSICIÓN DE STOCK -->
-  <section class="bg-slate-800 border border-emerald-500/40 rounded-2xl p-5 shadow-xl space-y-4">
-    <div class="flex justify-between items-center">
-      <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">🔄 Reponer / Sumar Stock Existente</h2>
-    </div>
-    <p class="text-xs text-slate-400">Buscá un producto por código para agregar más unidades sin tener que volver a cargarlo.</p>
-    
-    <div class="flex gap-2">
-      <input type="text" id="repo-codigo" placeholder="Escanear o ingresar código..." class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white text-xs flex-1 focus:outline-none focus:border-emerald-500">
-      <button onclick="buscarParaReponer()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-xl font-medium transition-colors">
-        Buscar
-      </button>
-    </div>
-    
-    <!-- Tarjeta de Confirmación de Reposición -->
-    <div id="repo-card" class="hidden bg-slate-900/80 border border-emerald-500/30 rounded-xl p-4 space-y-3">
-      <div class="flex justify-between items-center">
-        <div>
-          <h3 id="repo-nombre" class="text-sm font-bold text-white">Nombre del producto</h3>
-          <p class="text-xs text-slate-400">Stock Actual: <span id="repo-stock" class="text-emerald-400 font-bold">0</span></p>
+    <!-- VISTA 2: HISTORIAL DE VENTAS -->
+    <div id="view-ventas" class="hidden space-y-4">
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-amber-400">📊 Registro General de Ventas</h2>
+          <button onclick="cargarHistorialVentas()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300">🔄 Actualizar</button>
         </div>
-        <button onclick="imprimirEtiquetaQR(productoRepoActual.id, productoRepoActual.nombre)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1">
-          🖨️ Imprimir QR
-        </button>
-      </div>
-      <div class="flex gap-2 pt-2 border-t border-slate-800">
-        <input type="number" id="repo-cantidad" placeholder="Cantidad a sumar" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-xs w-32 focus:outline-none focus:border-emerald-500">
-        <button onclick="confirmarReposicion()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-1.5 rounded-lg font-medium transition-colors">
-          Confirmar Suma
-        </button>
-      </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
+              <tr>
+                <th class="p-3">Fecha/Hora</th>
+                <th class="p-3">Vendedor</th>
+                <th class="p-3">Medio Pago</th>
+                <th class="p-3 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-ventas-body" class="divide-y divide-slate-700"></tbody>
+          </table>
+        </div>
+      </section>
     </div>
-  </section>
 
-    <!-- CARGAR NUEVO PRODUCTO DESDE CERO -->
+
+    <!-- VISTA 3: GESTIÓN DE STOCK, REPOSICIÓN & ALERTAS -->
+    <div id="view-stock" class="hidden space-y-6">
+
+      <!-- PANEL DE REPOSICIÓN DE STOCK (PRODUCTOS YA EXISTENTES) -->
+      <section class="bg-slate-800 border border-emerald-500/40 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2">🔄 Reponer / Sumar Stock Existente</h2>
+        </div>
+        <p class="text-xs text-slate-400">Buscá un producto por código para agregar más unidades sin tener que volver a cargarlo.</p>
+        
+        <div class="flex gap-2">
+          <input type="text" id="repo-codigo" placeholder="Escanear o ingresar código..." class="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-400">
+          <button onclick="buscarParaReponer()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl transition">Buscar</button>
+        </div>
+
+        <!-- Tarjeta de Confirmación de Reposición -->
+        <div id="repo-card" class="hidden bg-slate-900/80 border border-emerald-500/30 rounded-xl p-4 space-y-3">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 id="repo-nombre" class="font-bold text-white text-sm">---</h3>
+              <p class="text-xs text-slate-400">Stock Actual: <span id="repo-stock-actual" class="font-bold text-amber-400">0</span> unidades</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="number" id="repo-cantidad-sumar" placeholder="Cant. a sumar" min="1" value="1" class="w-28 bg-slate-800 border border-slate-700 text-center font-bold text-emerald-400 text-sm rounded-xl py-2 focus:outline-none focus:border-emerald-400">
+              <button onclick="confirmarReposicion()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Sumar Stock</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CARGAR NUEVO PRODUCTO DESDE CERO -->
       <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-4">
         <div class="flex justify-between items-center">
           <h2 class="text-lg font-semibold text-amber-400">➕ Agregar Nuevo Producto (Primera Vez)</h2>
@@ -274,35 +222,6 @@ function iniciarSesion() {
         <button onclick="guardarNuevoProducto()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition mt-2">Guardar Producto en Inventario</button>
       </section>
 
-</div> <!-- FIN DE VISTA 3 -->
-      
-<!-- SECCIÓN: LISTADO COMPLETO DE STOCK -->
-<section id="panel-stock-total" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl mt-6 space-y-4">
-  <div class="flex justify-between items-center">
-    <h2 class="text-lg font-semibold text-white flex items-center gap-2">📦 Stock Total de Productos</h2>
-    <button onclick="cargarStockTotal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-      Actualizar Lista
-    </button>
-  </div>
-  <div class="overflow-x-auto">
-    <table class="w-full text-left border-collapse">
-      <thead>
-        <tr class="border-b border-slate-700 text-slate-400 text-xs">
-          <th class="p-3">Producto</th>
-          <th class="p-3">Código</th>
-          <th class="p-3">Stock</th>
-          <th class="p-3 text-right">Acción</th>
-        </tr>
-      </thead>
-      <tbody id="tabla-stock-total-body">
-        <tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">Cargando inventario...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-      
-    
-
       <!-- TABLA STOCK CRÍTICO -->
       <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl space-y-3">
         <div class="flex justify-between items-center">
@@ -317,8 +236,7 @@ function iniciarSesion() {
                 <th class="p-3">Producto</th>
                 <th class="p-3">Precio</th>
                 <th class="p-3 text-center">Stock Faltante</th>
-                <th class="p-3 text-center">Acciones</th> <!-- NUEVA COLUMNA -->
-             </tr>
+              </tr>
             </thead>
             <tbody id="tabla-stock-critico" class="divide-y divide-slate-700"></tbody>
           </table>
@@ -661,37 +579,33 @@ function iniciarSesion() {
 
     // --- REPOSICIÓN DE STOCK EXISTENTE ---
 
-async function buscarParaReponer() {
-  const code = document.getElementById('repo-codigo').value.trim();
-  if (!code) return;
+    async function buscarParaReponer() {
+      const code = document.getElementById('repo-codigo').value.trim();
+      if (!code) return;
 
-  const { data, error } = await _supabase
-    .from('productos')
-    .select('*')
-    .eq('codigo_barras', code)
-    .limit(1); // Cambiamos .single() por .limit(1) para evitar que rompa si hay dudas
+      const { data, error } = await _supabase
+        .from('productos')
+        .select('*')
+        .eq('codigo_barras', code)
+        .single();
 
-  if (error || !data || data.length === 0) {
-    alert('Producto no encontrado.');
-    document.getElementById('repo-card').classList.add('hidden');
-    return;
-  }
+      if (error || !data) {
+        alert('Producto no encontrado.');
+        document.getElementById('repo-card').classList.add('hidden');
+        return;
+      }
 
-  const producto = data[0];
-  productoRepoActual = producto;
-
-  // Mostramos los datos en la tarjeta
-  document.getElementById('repo-nombre').innerText = producto.nombre;
-  document.getElementById('repo-stock').innerText = producto.stock ?? 0;
-  
-  document.getElementById('repo-card').classList.remove('hidden');
-
-}
+      productoRepoActual = data;
+      document.getElementById('repo-nombre').textContent = data.nombre;
+      document.getElementById('repo-stock-actual').textContent = data.stock_actual;
+      document.getElementById('repo-cantidad-sumar').value = 1;
+      document.getElementById('repo-card').classList.remove('hidden');
+    }
 
     async function confirmarReposicion() {
       if (!productoRepoActual) return;
 
-      const sumar = parseInt(document.getElementById('repo-cantidad').value);
+      const sumar = parseInt(document.getElementById('repo-cantidad-sumar').value);
       if (isNaN(sumar) || sumar <= 0) return alert('Ingresá una cantidad válida a sumar.');
 
       const nuevoStock = productoRepoActual.stock_actual + sumar;
@@ -726,24 +640,19 @@ async function buscarParaReponer() {
       body.innerHTML = '';
 
       if (data.length === 0) {
-        body.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-xs text-slate-500">No hay productos en stock crítico por el momento 👍.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay productos en stock crítico por el momento 👍.</td></tr>`;
         return;
       }
 
       data.forEach(p => {
         const row = document.createElement('tr');
         row.className = "hover:bg-slate-700/30";
-       row.innerHTML = `
-  <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras || '-'}</td>
-  <td class="p-3 text-xs font-bold text-white">${p.nombre}</td>
-  <td class="p-3 text-xs text-slate-300">$${Number(p.precio_venta || 0).toLocaleString()}</td>
-  <td class="p-3 text-xs text-center"><span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-semibold">${p.stock}</span></td>
-  <td class="p-3 text-xs text-center">
-    <button onclick="imprimirEtiquetaQR('${p.id}', '${p.nombre}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition-colors inline-flex items-center gap-1">
-      🖨️ Imprimir QR
-    </button>
-  </td>
-`;
+        row.innerHTML = `
+          <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
+          <td class="p-3 text-xs font-bold text-white">${p.nombre}</td>
+          <td class="p-3 text-xs text-slate-300">$${p.precio_venta.toLocaleString()}</td>
+          <td class="p-3 text-xs text-center"><span class="px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400 border border-red-500/30">${p.stock_actual} ud.</span></td>
+        `;
         body.appendChild(row);
       });
     }
@@ -929,7 +838,7 @@ async function borrarHistorialVentas() {
       }
     }
 
-async function toggleCameraStock() {
+    async function toggleCameraStock() {
       const container = document.getElementById('reader-stock-container');
       if (container.classList.contains('hidden')) {
         await apagarCamaras();
@@ -960,10 +869,9 @@ async function toggleCameraStock() {
       } else {
         await apagarCamaras();
       }
-    }
-
       // --- FUNCIÓN PARA REGISTRAR LA VENTA ---
 async function registrarVenta() {
+  // 1. Envía los datos a Supabase incluyendo la fecha y hora exacta actual
   const { data: venta, error: ventaErr } = await _supabase
     .from('ventas')
     .insert([
@@ -981,6 +889,7 @@ async function registrarVenta() {
     return alert('Error en venta: ' + ventaErr.message);
   }
 
+  // 2. Registro del detalle de los productos del 
   for (const item of carrito) {
     if (!item.esManual) {
       await _supabase.from('detalle_ventas').insert([
@@ -1057,79 +966,27 @@ async function exportarExcel() {
   link.setAttribute("download", "historial_ventas.csv");
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link); 
+  document.body.removeChild(link);
 }
 
-async function borrarHistorial() {
-  const confirmar = confirm('¿Estás seguro de que deseas borrar todo el historial?');
+
+// --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
+async function borrarHistorialVentas() {
+  const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
   if (!confirmar) return;
 
-  const { error } = await _supabase
-    .from('historial') // Reemplaza 'historial' por el nombre exacto de tu tabla en Supabase si es diferente
-    .delete()
-    .neq('id', 0); // Condición para borrar los registros
+  const { error } = await _supabase.from('ventas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
   if (error) {
-    alert('Hubo un error al intentar borrar el historial.');
-    console.error(error);
+    console.error("Error al borrar historial:", error.message);
+    alert("Hubo un error al borrar el historial.");
     return;
   }
 
-  alert('Historial borrado con éxito.');
-  
-  // Si tienes una función para recargar la tabla en pantalla, la llamas aquí:
-  if (typeof cargarHistorial === 'function') {
-    cargarHistorial();
-  }
+  alert("Historial borrado con éxito.");
+  cargarHistorialVentas();
 }
-  
-async function cargarStockTotal() {
-  const { data, error } = await _supabase.from('productos').select('*').order('nombre', { ascending: true });
-  
-  const tbody = document.getElementById('tabla-stock-total-body');
-  if (!tbody) return;
-
-  if (error || !data || data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay productos registrados</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = '';
-  data.forEach(prod => {
-    const tr = document.createElement('tr');
-    tr.className = 'border-b border-slate-800 hover:bg-slate-800/50 text-xs text-slate-300';
-    tr.innerHTML = `
-      <td class="p-3 font-medium text-white">${prod.nombre || 'Sin nombre'}</td>
-      <td class="p-3 text-slate-400">${prod.codigo_barras || '-'}</td>
-      <td class="p-3 font-bold text-emerald-400">${prod.stock ?? 0}</td>
-      <td class="p-3 text-right">
-        <button onclick="imprimirEtiquetaQR('${prod.id}', '${prod.nombre}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg font-medium">
-          🖨️ Imprimir QR
-        </button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-    
-// Ejecutar al iniciar la página para que la tabla tenga datos
-window.addEventListener('DOMContentLoaded', () => {
-  cargarStockTotal();
-});
-    
-async function imprimirEtiquetaQR(idProducto, nombreProducto) {
-  const { data: producto, error } = await _supabase
-    .from('productos')
-    .select('*')
-    .eq('id', idProducto)
-    .single();
-
-  if (error || !producto) {
-    alert('No se pudo cargar la información para la etiqueta.');
-    return;
-  }
-
-  
-    </script>
+    }
+  </script>
 </body>
 </html>
