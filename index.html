@@ -602,390 +602,204 @@
       document.getElementById('repo-card').classList.remove('hidden');
     }
 
-    async function confirmarReposicion() {
+       async function confirmarReposicion() {
       if (!productoRepoActual) return;
 
-      const sumar = parseInt(document.getElementById('repo-cantidad-sumar').value);
-      if (isNaN(sumar) || sumar <= 0) return alert('Ingresá una cantidad válida a sumar.');
+      const cantidadSumar = parseInt(document.getElementById('repo-cantidad-sumar').value);
+      if (isNaN(cantidadSumar) || cantidadSumar <= 0) {
+        return alert('Ingresá una cantidad válida mayor a 0.');
+      }
 
-      const nuevoStock = productoRepoActual.stock_actual + sumar;
+      const nuevoStock = productoRepoActual.stock_actual + cantidadSumar;
 
       const { error } = await _supabase
         .from('productos')
         .update({ stock_actual: nuevoStock })
         .eq('id', productoRepoActual.id);
 
-      if (error) return alert('Error al actualizar stock: ' + error.message);
-
-      alert(`¡Stock actualizado! Nuevo stock de ${productoRepoActual.nombre}: ${nuevoStock} unidades.`);
-
-      document.getElementById('repo-codigo').value = '';
-      document.getElementById('repo-card').classList.add('hidden');
-      productoRepoActual = null;
-      cargarStockBajo();
+      if (error) {
+        alert('No se pudo actualizar el stock: ' + error.message);
+      } else {
+        alert(`✔️ Stock actualizado. Nuevo stock: ${nuevoStock} unidades.`);
+        document.getElementById('repo-card').classList.add('hidden');
+        document.getElementById('repo-codigo').value = '';
+        productoRepoActual = null;
+      }
     }
 
-    // --- HISTORIAL & REPORTES ---
+    // --- CARGAR NUEVO PRODUCTO ---
+
+    async function guardarNuevoProducto() {
+      const codigo = document.getElementById('new-codigo').value.trim();
+      const nombre = document.getElementById('new-nombre').value.trim();
+      const categoria = document.getElementById('new-categoria').value.trim().toUpperCase();
+      const precio = parseFloat(document.getElementById('new-precio').value);
+      const stock = parseInt(document.getElementById('new-stock').value);
+
+      if (!codigo || !nombre || isNaN(precio) || isNaN(stock)) {
+        return alert('Por favor, completá los campos obligatorios: Código, Nombre, Precio y Stock.');
+      }
+
+      // Validar duplicados en base de datos
+      const { data: repetido } = await _supabase
+        .from('productos')
+        .select('id')
+        .eq('codigo_barras', codigo)
+        .maybeSingle();
+
+      if (repetido) {
+        return alert('Ese código de barras ya existe en el sistema. Usá el panel de reposición.');
+      }
+
+      const { error } = await _supabase
+        .from('productos')
+        .insert([{
+          codigo_barras: codigo,
+          nombre: nombre,
+          categoria: categoria || 'VARIOS',
+          precio_venta: precio,
+          stock_actual: stock,
+          talle: 'Único', 
+          color: 'N/A'
+        }]);
+
+      if (error) {
+        alert('Error al guardar el producto: ' + error.message);
+      } else {
+        alert('🎉 Producto guardado en el inventario con éxito.');
+        document.getElementById('new-codigo').value = '';
+        document.getElementById('new-nombre').value = '';
+        document.getElementById('new-categoria').value = '';
+        document.getElementById('new-precio').value = '';
+        document.getElementById('new-stock').value = '';
+      }
+    }
+
+    // --- HISTORIAL Y STOCK CRÍTICO ---
+
+    async function cargarHistorialVentas() {
+      const tbody = document.getElementById('tabla-ventas-body');
+      if (!tbody) return;
+      tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-xs text-slate-500">Cargando...</td></tr>`;
+
+      const { data, error } = await _supabase
+        .from('ventas')
+        .select('*')
+        .order('creado_en', { ascending: false });
+
+      if (error) return tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-xs text-red-400">Error al cargar historial.</td></tr>`;
+      if (!data || data.length === 0) return tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-xs text-slate-500">No hay ventas registradas.</td></tr>`;
+
+      tbody.innerHTML = '';
+      data.forEach(v => {
+        const fecha = new Date(v.creado_en).toLocaleString('es-AR');
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 text-xs';
+        tr.innerHTML = `
+          <td class="p-3 font-mono">${fecha}</td>
+          <td class="p-3">${v.cliente_contacto || 'Sistema'}</td>
+          <td class="p-3"><span class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded text-[10px] text-slate-300">${v.medio_pago}</span></td>
+          <td class="p-3 text-right font-bold text-amber-400">$${v.total.toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
     async function cargarStockBajo() {
+      const tbody = document.getElementById('tabla-stock-critico');
+      if (!tbody) return;
+      tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-xs text-slate-500">Analizando inventario...</td></tr>`;
+
       const { data, error } = await _supabase
         .from('productos')
         .select('*')
         .lte('stock_actual', 3)
         .order('stock_actual', { ascending: true });
 
-      if (error) return;
+      if (error) return tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-xs text-red-400">Error al cargar alertas.</td></tr>`;
+      if (!data || data.length === 0) return tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-xs text-green-400">✅ Todo el stock está en niveles óptimos.</td></tr>`;
 
-      const body = document.getElementById('tabla-stock-critico');
-      body.innerHTML = '';
-
-      if (data.length === 0) {
-        body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay productos en stock crítico por el momento 👍.</td></tr>`;
-        return;
-      }
-
+      tbody.innerHTML = '';
       data.forEach(p => {
-        const row = document.createElement('tr');
-        row.className = "hover:bg-slate-700/30";
-        row.innerHTML = `
-          <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
-          <td class="p-3 text-xs font-bold text-white">${p.nombre}</td>
-          <td class="p-3 text-xs text-slate-300">$${p.precio_venta.toLocaleString()}</td>
-          <td class="p-3 text-xs text-center"><span class="px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400 border border-red-500/30">${p.stock_actual} ud.</span></td>
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 text-xs border-l-2 border-l-red-500/50';
+        tr.innerHTML = `
+          <td class="p-3 font-mono text-slate-400">${p.codigo_barras}</td>
+          <td class="p-3 font-bold">${p.nombre} <span class="text-[10px] text-slate-500 font-normal">(${p.talle || 'U'} / ${p.color || 'U'})</span></td>
+          <td class="p-3">$${p.precio_venta.toLocaleString()}</td>
+          <td class="p-3 text-center"><span class="bg-red-500/20 text-red-400 font-bold px-2 py-0.5 rounded">${p.stock_actual} un.</span></td>
         `;
-        body.appendChild(row);
+        tbody.appendChild(tr);
       });
     }
 
-    async function cargarHistorialVentas() {
-  const { data, error } = await _supabase
-    .from('ventas')
-    .select('*')
-
-  if (error) {
-    console.error("Error al cargar ventas:", error.message);
-    return;
-  }
-
-  const body = document.getElementById('tabla-ventas-body');
-  body.innerHTML = '';
-
-  if (!data || data.length === 0) {
-    body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay ventas registradas.</td></tr>`;
-    return;
-  }
-
-  data.forEach((venta) => {
-    const row = document.createElement('tr');
-    row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
-    
-    row.innerHTML = `
-      <td class="p-3 text-xs text-slate-300">${venta.creado_en ? new Date(venta.creado_en).toLocaleString() : 'Sin fecha'}</td>
-      <td class="p-3 text-xs text-slate-300">${venta.vendedor || 'General'}</td>
-      <td class="p-3 text-xs text-slate-300">${venta.medio_pago || 'Efectivo'}</td>
-      <td class="p-3 text-xs text-right font-bold text-amber-400">$${(venta.total || 0).toLocaleString()}</td>
-    `;
-    
-    body.appendChild(row);
-  });
-}
-
-    async function guardarNuevoProducto() {
-      const cod = document.getElementById('new-codigo').value.trim();
-      const nom = document.getElementById('new-nombre').value.trim();
-      const cat = document.getElementById('new-categoria').value.trim();
-      const pre = parseFloat(document.getElementById('new-precio').value);
-      const stk = parseInt(document.getElementById('new-stock').value);
-
-      if (!cod || !nom || !pre || isNaN(stk)) return alert('Completá los campos obligatorios.');
-
-      const { error } = await _supabase.from('productos').insert([{
-        codigo_barras: cod,
-        nombre: nom,
-        categoria: cat,
-        precio_venta: pre,
-        stock_actual: stk
-      }]);
-
-      if (error) {
-        if (error.code === '23505') {
-          return alert('Ese código de barras ya existe. Si querés sumarle stock, usá el panel verde de Reponer Stock.');
-        }
-        return alert('Error al cargar: ' + error.message);
+    async function borrarHistorialVentas() {
+      if (!usuarioSesion || usuarioSesion.rol !== 'admin') {
+        return alert('Acceso denegado. Se requieren permisos de administrador.');
       }
 
-      alert('¡Producto guardado exitosamente!');
-      document.getElementById('new-codigo').value = '';
-      document.getElementById('new-nombre').value = '';
-      document.getElementById('new-categoria').value = '';
-      document.getElementById('new-precio').value = '';
-      document.getElementById('new-stock').value = '';
-      
-      cargarStockBajo();
+      if (!confirm('⚠️ ¿Estás seguro de vaciar el historial de ventas? Esta acción es irreversible.')) return;
+
+      const { error: errDetalle } = await _supabase.from('detalle_ventas').delete().neq('id', 0);
+      const { error: errVentas } = await _supabase.from('ventas').delete().neq('id', 0);
+
+      if (errDetalle || errVentas) {
+        alert('Hubo un problema al borrar los registros.');
+      } else {
+        alert('Historial limpiado correctamente.');
+        cargarHistorialVentas();
+      }
     }
 
+    function exportarExcel() {
+      alert('Función para exportar lista activa. Podés integrar una librería externa o procesar un archivo CSV nativo.');
+    }
 
-// --- FUNCIÓN PARA CARGAR Y MOSTRAR EL HISTORIAL DE VENTAS ---
-async function cargarHistorialVentas() {
-  const { data, error } = await _supabase
-    .from('ventas')
-    .select('*')
-    .order('creado_en', { ascending: false });
+    // --- MANEJO DE ESCÁNERES QR/BARRAS (HTML5-QRCODE) ---
 
-  if (error) {
-    console.error("Error al cargar ventas:", error.message);
-    return;
-  }
-
-  const body = document.getElementById('tabla-ventas-body');
-  body.innerHTML = '';
-
-  if (!data || data.length === 0) {
-    body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay ventas registradas</td></tr>`;
-    return;
-  }
-
-  data.forEach((venta) => {
-    const row = document.createElement('tr');
-    row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
-
-    let fechaFormateada = venta.creado_en ? new Date(venta.creado_en).toLocaleString() : 'Sin fecha';
-
-    row.innerHTML = `
-      <td class="p-3 text-xs text-slate-300">${fechaFormateada}</td>
-      <td class="p-3 text-xs text-slate-300">${venta.vendedor || 'General'}</td>
-      <td class="p-3 text-xs text-slate-300">${venta.medio_pago || 'Efectivo'}</td>
-      <td class="p-3 text-xs text-right font-bold text-amber-400">$${(venta.total || 0).toLocaleString()}</td>
-    `;
-    body.appendChild(row);
-  });
-}
-
-
-// --- FUNCIÓN PARA EXPORTAR A EXCEL (CSV) ---
-async function exportarExcel() {
-  const { data, error } = await _supabase.from('ventas').select('*');
-  
-  if (error || !data || data.length === 0) {
-    return alert("No hay datos para exportar.");
-  }
-
-  let csvContent = "data:text/csv;charset=utf-8,ID,Fecha,Vendedor,Medio de Pago,Total\n";
-  
-  data.forEach(v => {
-    let fechaFormateada = v.creado_en ? new Date(v.creado_en).toLocaleString() : 'Sin fecha';
-    csvContent += `"${v.id}","${fechaFormateada}","${v.vendedor || 'General'}","${v.medio_pago || 'Efectivo'}","${v.total || 0}"\n`;
-  });
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "historial_ventas.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-
-// --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
-async function borrarHistorialVentas() {
-  const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
-  if (!confirmar) return;
-
-  const { error } = await _supabase.from('ventas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-
-  if (error) {
-    console.error("Error al borrar historial:", error.message);
-    alert("Hubo un error al borrar el historial.");
-    return;
-  }
-
-  alert("Historial borrado con éxito.");
-  cargarHistorialVentas();
-}
-    // --- CÁMARAS ---
-
-    async function toggleCamera() {
+    function toggleCamera() {
       const container = document.getElementById('reader-container');
       if (container.classList.contains('hidden')) {
-        await apagarCamaras();
         container.classList.remove('hidden');
-
-        html5QrCode = new Html5Qrcode("reader", { formatsToSupport: barcodeFormats, verbose: false });
-        
-        const config = { 
-          fps: 20, 
-          qrbox: { width: 300, height: 150 },
-          aspectRatio: 1.0,
-          experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-        };
-
+        html5QrCode = new Html5QrCode("reader");
         html5QrCode.start(
-          { facingMode: "environment" }, 
-          config,
-          async (decodedTest) => {
-            document.getElementById('barcode-input').value = decodedTest;
-            buscarPorCodigo(decodedTest);
-            await apagarCamaras();
+          { facingMode: "environment" },
+          { fps: 15, qrbox: { width: 250, height: 150 }, formatsToSupport: barcodeFormats },
+          (decodedText) => {
+            document.getElementById('barcode-input').value = decodedText;
+            buscarPorCodigo(decodedText);
+            apagarCamaras();
           },
-          (errorMessage) => {}
-        ).catch(err => {
-          alert("Error al abrir cámara: " + err);
+          () => {} // Ignorar fallos de lectura continuos en el visor
+        ).catch(() => {
+          alert("No se pudo iniciar la cámara trasera.");
           container.classList.add('hidden');
         });
       } else {
-        await apagarCamaras();
+        apagarCamaras();
       }
     }
 
-    async function toggleCameraStock() {
+    function toggleCameraStock() {
       const container = document.getElementById('reader-stock-container');
       if (container.classList.contains('hidden')) {
-        await apagarCamaras();
         container.classList.remove('hidden');
-
-        html5QrCodeStock = new Html5Qrcode("reader-stock", { formatsToSupport: barcodeFormats, verbose: false });
-        
-        const config = { 
-          fps: 20, 
-          qrbox: { width: 300, height: 150 },
-          aspectRatio: 1.0,
-          experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-        };
-
+        html5QrCodeStock = new Html5QrCode("reader-stock");
         html5QrCodeStock.start(
-          { facingMode: "environment" }, 
-          config,
-          async (decodedTest) => {
-            document.getElementById('new-codigo').value = decodedTest;
-            await apagarCamaras();
-            document.getElementById('new-nombre').focus();
+          { facingMode: "environment" },
+          { fps: 15, qrbox: { width: 250, height: 150 }, formatsToSupport: barcodeFormats },
+          (decodedText) => {
+            document.getElementById('new-codigo').value = decodedText;
+            apagarCamaras();
           },
-          (errorMessage) => {}
-        ).catch(err => {
-          alert("Error al abrir cámara: " + err);
+          () => {}
+        ).catch(() => {
+          alert("No se pudo iniciar la cámara trasera.");
           container.classList.add('hidden');
         });
       } else {
-        await apagarCamaras();
+        apagarCamaras();
       }
-      // --- FUNCIÓN PARA REGISTRAR LA VENTA ---
-async function registrarVenta() {
-  // 1. Envía los datos a Supabase incluyendo la fecha y hora exacta actual
-  const { data: venta, error: ventaErr } = await _supabase
-    .from('ventas')
-    .insert([
-      { 
-        total: totalVenta,
-        medio_pago: medioPagoSeleccionado,
-        cliente_contacto: `${usuarioSesion.nombre}`,
-        creado_en: new Date().toISOString()
-      }
-    ])
-    .select()
-    .single();
-
-  if (ventaErr) {
-    return alert('Error en venta: ' + ventaErr.message);
-  }
-
-  // 2. Registro del detalle de los productos del 
-  for (const item of carrito) {
-    if (!item.esManual) {
-      await _supabase.from('detalle_ventas').insert([
-        {
-          venta_id: venta.id,
-          producto_id: item.id,
-          cantidad: item.cantidad,
-          precio_unitario: item.precio
-        }
-      ]);
-    }
-  }
-
-  alert("¡Venta registrada con éxito!");
-  cargarHistorialVentas();
-}
-
-
-// --- FUNCIÓN PARA CARGAR Y MOSTRAR EL HISTORIAL DE VENTAS ---
-async function cargarHistorialVentas() {
-  const { data, error } = await _supabase
-    .from('ventas')
-    .select('*')
-    .order('creado_en', { ascending: false });
-
-  if (error) {
-    console.error("Error al cargar ventas:", error.message);
-    return;
-  }
-
-  const body = document.getElementById('tabla-ventas-body');
-  body.innerHTML = '';
-
-  if (!data || data.length === 0) {
-    body.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-slate-500">No hay ventas registradas</td></tr>`;
-    return;
-  }
-
-  data.forEach((venta) => {
-    const row = document.createElement('tr');
-    row.className = 'border-b border-slate-800 hover:bg-slate-800/50';
-
-    let fechaFormateada = venta.creado_en ? new Date(venta.creado_en).toLocaleString() : 'Sin fecha';
-
-    row.innerHTML = `
-      <td class="p-3 text-xs text-slate-300">${fechaFormateada}</td>
-      <td class="p-3 text-xs text-slate-300">${venta.vendedor || 'General'}</td>
-      <td class="p-3 text-xs text-slate-300">${venta.medio_pago || 'Efectivo'}</td>
-      <td class="p-3 text-xs text-right font-bold text-amber-400">$${(venta.total || 0).toLocaleString()}</td>
-    `;
-    body.appendChild(row);
-  });
-}
-
-
-// --- FUNCIÓN PARA EXPORTAR A EXCEL (CSV) ---
-async function exportarExcel() {
-  const { data, error } = await _supabase.from('ventas').select('*');
-  
-  if (error || !data || data.length === 0) {
-    return alert("No hay datos para exportar.");
-  }
-
-  let csvContent = "data:text/csv;charset=utf-8,ID,Fecha,Vendedor,Medio de Pago,Total\n";
-  
-  data.forEach(v => {
-    let fechaFormateada = v.creado_en ? new Date(v.creado_en).toLocaleString() : 'Sin fecha';
-    csvContent += `"${v.id}","${fechaFormateada}","${v.vendedor || 'General'}","${v.medio_pago || 'Efectivo'}","${v.total || 0}"\n`;
-  });
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "historial_ventas.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-
-// --- FUNCIÓN PARA BORRAR TODO EL HISTORIAL ---
-async function borrarHistorialVentas() {
-  const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
-  if (!confirmar) return;
-
-  const { error } = await _supabase.from('ventas').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-
-  if (error) {
-    console.error("Error al borrar historial:", error.message);
-    alert("Hubo un error al borrar el historial.");
-    return;
-  }
-
-  alert("Historial borrado con éxito.");
-  cargarHistorialVentas();
-}
     }
   </script>
 </body>
