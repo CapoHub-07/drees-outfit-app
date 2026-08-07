@@ -53,7 +53,7 @@
     <div id="lbl-nombre" class="marca" style="font-size:12px; font-weight:normal; letter-spacing:normal;">Cargando...</div>
     <div id="lbl-caracteristicas" class="caracteristicas">Talle: - | Color: -</div>
     
-    <!-- Imagen conectada a QuickChart -->
+    <!-- Imagen conectada al generador global QR -->
     <img id="img-qr" class="qr-img" src="" alt="Código QR" />
     
     <div id="lbl-precio" class="precio">$0</div>
@@ -69,17 +69,17 @@
     const talle = urlParams.get('talle') || '-';
     const color = urlParams.get('color') || '-';
 
-    // Inyectamos los textos reales en los elementos del HTML
+    // Inyectamos los textos reales en los divs correspondientes
     document.getElementById('lbl-nombre').textContent = nombre;
     document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
     document.getElementById('lbl-precio').textContent = `$${precio.toLocaleString('es-AR')}`;
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // LOCALIZAMOS LA IMAGEN DE LA LÍNEA 57 Y LE ASIGNAMOS EL QR GLOBAL INFALIBLE
+    // Generamos el QR de forma estable con el servidor global QRServer sin bloqueos de red
     const imgQr = document.getElementById('img-qr');
     imgQr.src = `https://qrserver.com{encodeURIComponent(codigo)}`;
 
-    // Esperamos a que la imagen cargue completamente antes de mandar a imprimir
+    // Esperamos a que la imagen cargue en el navegador del todo antes de disparar la impresión
     imgQr.onload = function() {
       setTimeout(function() {
         window.print();
@@ -87,7 +87,7 @@
       }, 400);
     };
 
-    // Respaldo de seguridad por si la red está lenta
+    // Respaldo de seguridad por si la red está lenta para que no se congele
     setTimeout(function() {
       if (!imgQr.complete) {
         window.print();
