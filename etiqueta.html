@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Imprimir Etiqueta QR</title>
+  <!-- Cargamos la librería nativa para dibujar códigos QR localmente -->
+  <script src="https://cloudflare.com"></script>
   <style>
     body { 
       font-family: 'Helvetica Neue', Arial, sans-serif; 
@@ -29,10 +31,18 @@
       color: #444; 
       margin-bottom: 8px;
     }
-    .qr-img { 
+    /* Estenedor para el QR nativo */
+    #canvas-qr { 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px auto;
       width: 140px; 
       height: 140px; 
-      margin: 5px 0;
+    }
+    #canvas-qr img {
+      width: 140px;
+      height: 140px;
     }
     .precio { 
       font-size: 20px; 
@@ -53,14 +63,14 @@
     <div id="lbl-nombre" class="marca" style="font-size:12px; font-weight:normal; letter-spacing:normal;">Cargando...</div>
     <div id="lbl-caracteristicas" class="caracteristicas">Talle: - | Color: -</div>
     
-    <!-- Imagen conectada al generador global QR -->
-    <img id="img-qr" class="qr-img" src="" alt="Código QR" />
+    <!-- Contenedor donde la librería dibujará el QR perfecto -->
+    <div id="canvas-qr"></div>
     
     <div id="lbl-precio" class="precio">$0</div>
     <div id="lbl-codigo" style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">-</div>
   </div>
 
-    <script>
+  <script>
     // 1. Leemos los parámetros que viajan por la URL de forma segura
     const urlParams = new URLSearchParams(window.location.search);
     const codigo = urlParams.get('codigo') || '000000';
@@ -75,28 +85,22 @@
     document.getElementById('lbl-precio').textContent = `$${precio.toLocaleString('es-AR')}`;
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // 3. Localizamos la etiqueta de imagen y le asignamos la API global estable
-    const imgQr = document.getElementById('img-qr');
-    imgQr.src = `https://qrserver.com{encodeURIComponent(codigo)}`;
+    // 3. Dibujamos el QR de forma local e instantánea en el contenedor
+    const contenedorQR = document.getElementById('canvas-qr');
+    new QRCode(contenedorQR, {
+      text: codigo,
+      width: 140,
+      height: 140,
+      colorDark : "#000000",
+      colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.H
+    });
 
-    // 4. Función centralizada de impresión con delay para evitar el bloqueo del navegador
-    function ejecutarImpresionSegura() {
-      setTimeout(function() {
-        window.print();
-        setTimeout(function() { window.close(); }, 600);
-      }, 1200); // 1.2 segundos para garantizar que el renderizado de la imagen finalice
-    }
-
-    // 5. Disparadores de control
-    if (imgQr.complete) {
-      ejecutarImpresionSegura();
-    } else {
-      imgQr.onload = ejecutarImpresionSegura;
-      imgQr.onerror = function() {
-        // Respaldo automático por si hay microcortes en la red
-        ejecutarImpresionSegura();
-      };
-    }
+    // 4. Esperamos una pequeña fracción de segundo para asegurar la inyección del canvas antes de imprimir
+    setTimeout(function() {
+      window.print();
+      setTimeout(function() { window.close(); }, 600);
+    }, 800);
   </script>
 </body>
 </html>
