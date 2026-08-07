@@ -897,7 +897,7 @@
           ? `<span class="px-2.5 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400 border border-red-500/30">${p.stock_actual} un.</span>`
           : `<span class="px-2.5 py-0.5 rounded-full font-bold bg-green-500/20 text-green-400 border border-green-500/30">${p.stock_actual} un.</span>`;
 
-              row.innerHTML = `
+         row.innerHTML = `
         <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
         <td class="p-3 text-xs font-bold text-white">${p.nombre} <br><span class="text-[10px] text-slate-500 font-normal uppercase">${p.categoria || 'Gral'}</span></td>
         <td class="p-3 text-xs text-center text-slate-300 font-semibold">${p.talle || '-'}</td>
