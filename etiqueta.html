@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Imprimir Etiqueta QR</title>
+  <style>
+    body { 
+      font-family: 'Helvetica Neue', Arial, sans-serif; 
+      text-align: center; 
+      margin: 0; 
+      padding: 10px;
+      color: #000;
+      background: #fff;
+    }
+    .etiqueta-box {
+      border: 2px dashed #000;
+      padding: 15px;
+      display: inline-block;
+      width: 260px;
+    }
+    .marca { 
+      font-size: 14px; 
+      font-weight: 900; 
+      letter-spacing: 2px; 
+      margin-bottom: 2px;
+    }
+    .detalle { 
+      font-size: 11px; 
+      color: #444; 
+      margin-bottom: 8px;
+    }
+    .qr-img { 
+      width: 140px; 
+      height: 140px; 
+      margin: 5px 0;
+    }
+    .precio { 
+      font-size: 20px; 
+      font-weight: bold; 
+      margin-top: 4px;
+    }
+    .caracteristicas {
+      font-size: 10px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="etiqueta-box">
+    <div class="marca">DREES OUTFIT</div>
+    <div id="lbl-nombre" class="marca" style="font-size:12px; font-weight:normal; letter-spacing:normal;">Cargando...</div>
+    <div id="lbl-caracteristicas" class="caracteristicas">Talle: - | Color: -</div>
+    
+    <!-- Imagen conectada a QuickChart -->
+    <img id="img-qr" class="qr-img" src="" alt="Código QR" />
+    
+    <div id="lbl-precio" class="precio">$0</div>
+    <div id="lbl-codigo" style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">-</div>
+  </div>
+
+  <script>
+    // Al cargar la página, leemos los datos que vienen en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const codigo = urlParams.get('codigo') || '000000';
+    const nombre = urlParams.get('nombre') || 'Producto';
+    const precio = parseFloat(urlParams.get('precio')) || 0;
+    const talle = urlParams.get('talle') || '-';
+    const color = urlParams.get('color') || '-';
+
+    // Inyectamos los textos reales en los divs correspondientes
+    document.getElementById('lbl-nombre').textContent = nombre;
+    document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
+    document.getElementById('lbl-precio').textContent = `$${precio.toLocaleString('es-AR')}`;
+    document.getElementById('lbl-codigo').textContent = codigo;
+
+    // Generamos el QR estable usando QuickChart
+    const imgQr = document.getElementById('img-qr');
+    imgQr.src = `https://quickchart.io{encodeURIComponent(codigo)}`;
+
+    // Esperamos a que la imagen cargue en el navegador del todo antes de disparar la impresión
+    imgQr.onload = function() {
+      setTimeout(function() {
+        window.print();
+        setTimeout(function() { window.close(); }, 500);
+      }, 300);
+    };
+
+    // Por si hay algún problema de red, ponemos un límite de tiempo de respaldo para que no se congele
+    setTimeout(function() {
+      if (!imgQr.complete) {
+        window.print();
+        setTimeout(function() { window.close(); }, 500);
+      }
+    }, 2500);
+  </script>
+
+</body>
+</html>
