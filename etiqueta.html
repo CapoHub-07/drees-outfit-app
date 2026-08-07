@@ -60,8 +60,8 @@
     <div id="lbl-codigo" style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">-</div>
   </div>
 
-  <script>
-    // Al cargar la página, leemos los datos que vienen en la URL
+    <script>
+    // 1. Leemos los parámetros que viajan por la URL de forma segura
     const urlParams = new URLSearchParams(window.location.search);
     const codigo = urlParams.get('codigo') || '000000';
     const nombre = urlParams.get('nombre') || 'Producto';
@@ -69,32 +69,34 @@
     const talle = urlParams.get('talle') || '-';
     const color = urlParams.get('color') || '-';
 
-    // Inyectamos los textos reales en los divs correspondientes
+    // 2. Inyectamos los datos reales de la prenda en la plantilla visual
     document.getElementById('lbl-nombre').textContent = nombre;
     document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
     document.getElementById('lbl-precio').textContent = `$${precio.toLocaleString('es-AR')}`;
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // Generamos el QR de forma estable con el servidor global QRServer sin bloqueos de red
+    // 3. Localizamos la etiqueta de imagen y le asignamos la API global estable
     const imgQr = document.getElementById('img-qr');
     imgQr.src = `https://qrserver.com{encodeURIComponent(codigo)}`;
 
-    // Esperamos a que la imagen cargue en el navegador del todo antes de disparar la impresión
-    imgQr.onload = function() {
+    // 4. Función centralizada de impresión con delay para evitar el bloqueo del navegador
+    function ejecutarImpresionSegura() {
       setTimeout(function() {
         window.print();
-        setTimeout(function() { window.close(); }, 500);
-      }, 400);
-    };
+        setTimeout(function() { window.close(); }, 600);
+      }, 1200); // 1.2 segundos para garantizar que el renderizado de la imagen finalice
+    }
 
-    // Respaldo de seguridad por si la red está lenta para que no se congele
-    setTimeout(function() {
-      if (!imgQr.complete) {
-        window.print();
-        setTimeout(function() { window.close(); }, 500);
-      }
-    }, 2500);
+    // 5. Disparadores de control
+    if (imgQr.complete) {
+      ejecutarImpresionSegura();
+    } else {
+      imgQr.onload = ejecutarImpresionSegura;
+      imgQr.onerror = function() {
+        // Respaldo automático por si hay microcortes en la red
+        ejecutarImpresionSegura();
+      };
+    }
   </script>
-
 </body>
 </html>
