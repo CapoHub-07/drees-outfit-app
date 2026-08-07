@@ -69,25 +69,25 @@
     const talle = urlParams.get('talle') || '-';
     const color = urlParams.get('color') || '-';
 
-    // Inyectamos los textos reales en los divs correspondientes
+    // Inyectamos los textos reales en los elementos del HTML
     document.getElementById('lbl-nombre').textContent = nombre;
     document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
     document.getElementById('lbl-precio').textContent = `$${precio.toLocaleString('es-AR')}`;
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // Generamos el QR estable usando QuickChart
+    // LOCALIZAMOS LA IMAGEN DE LA LÍNEA 57 Y LE ASIGNAMOS EL QR GLOBAL INFALIBLE
     const imgQr = document.getElementById('img-qr');
-    imgQr.src = `https://quickchart.io{encodeURIComponent(codigo)}`;
+    imgQr.src = `https://qrserver.com{encodeURIComponent(codigo)}`;
 
-    // Esperamos a que la imagen cargue en el navegador del todo antes de disparar la impresión
+    // Esperamos a que la imagen cargue completamente antes de mandar a imprimir
     imgQr.onload = function() {
       setTimeout(function() {
         window.print();
         setTimeout(function() { window.close(); }, 500);
-      }, 300);
+      }, 400);
     };
 
-    // Por si hay algún problema de red, ponemos un límite de tiempo de respaldo para que no se congele
+    // Respaldo de seguridad por si la red está lenta
     setTimeout(function() {
       if (!imgQr.complete) {
         window.print();
