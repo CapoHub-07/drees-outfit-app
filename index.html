@@ -709,27 +709,27 @@
           color: 'N/A'
         }]);
 
-// Reemplaza el bloque de éxito dentro de guardarNuevoProducto() por este:
-if (error) {
-  if (error.code === '23505') {
-    return alert('Ese código de barras ya existe. Si querés sumarle stock, usá el panel verde de Reponer Stock.');
-  }
-  return alert('Error al cargar: ' + error.message);
-}
-
-alert('¡Producto guardado exitosamente!');
-
-// Preguntar al usuario si desea imprimir la etiqueta del producto recién creado
-if (confirm(`¿Querés imprimir la etiqueta QR para ${nom} ahora?`)) {
-  imprimirEtiquetaQR(cod, nom, pre, 'Único', 'N/A'); 
-}
-
-        document.getElementById('new-codigo').value = '';
-        document.getElementById('new-nombre').value = '';
-        document.getElementById('new-categoria').value = '';
-        document.getElementById('new-precio').value = '';
-        document.getElementById('new-stock').value = '';
+      if (error) {
+        if (error.code === '23505') {
+          return alert('Ese código de barras ya existe. Si querés sumarle stock, usá el panel verde de Reponer Stock.');
+        }
+        return alert('Error al cargar: ' + error.message);
       }
+
+      alert('¡Producto guardado exitosamente!');
+
+      // Preguntar al usuario usando los nombres de variables correctos
+      if (confirm(`¿Querés imprimir la etiqueta QR para ${nombre} ahora?`)) {
+        imprimirEtiquetaQR(codigo, nombre, precio, 'Único', 'N/A'); 
+      }
+
+      document.getElementById('new-codigo').value = '';
+      document.getElementById('new-nombre').value = '';
+      document.getElementById('new-categoria').value = '';
+      document.getElementById('new-precio').value = '';
+      document.getElementById('new-stock').value = '';
+    }
+
 
     // --- HISTORIAL Y STOCK CRÍTICO ---
 
