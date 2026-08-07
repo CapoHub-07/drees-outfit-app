@@ -718,18 +718,21 @@
 
       alert('¡Producto guardado exitosamente!');
 
-      // Preguntar al usuario usando los nombres de variables correctos
+      // Preguntar al usuario si desea imprimir la etiqueta del producto recién creado
       if (confirm(`¿Querés imprimir la etiqueta QR para ${nombre} ahora?`)) {
+        // Ejecuta la función de impresión pasándole los datos reales que acabas de escribir
         imprimirEtiquetaQR(codigo, nombre, precio, 'Único', 'N/A'); 
       }
 
+      // Aquí continúa tu código limpiando los inputs...
       document.getElementById('new-codigo').value = '';
       document.getElementById('new-nombre').value = '';
       document.getElementById('new-categoria').value = '';
       document.getElementById('new-precio').value = '';
       document.getElementById('new-stock').value = '';
+      
+      cargarStockBajo();
     }
-
 
     // --- HISTORIAL Y STOCK CRÍTICO ---
 
@@ -914,7 +917,9 @@
 
     function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
       const textoQR = `DREES OUTFIT\nProducto: ${nombre}\nPrecio: $${precio.toLocaleString()}\nTalle: ${talle}\nColor: ${color}\nCódigo: ${codigo}`;
-      const urlGoogleQR = `https://googleapis.com{encodeURIComponent(textoQR)}&choe=UTF-8`;
+    // Reemplaza la línea vieja por esta en tu función de impresión:
+const urlGoogleQR = `https://quickchart.io{encodeURIComponent(codigo)}`;
+
 
       const ventanaImpresion = window.open('', '_blank', 'width=400,height=400');
       
