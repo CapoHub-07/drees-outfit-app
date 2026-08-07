@@ -35,6 +35,7 @@
     #img-qr {
       width: 140px;
       height: 140px;
+      display: block;
     }
     .precio { 
       font-size: 20px; 
@@ -46,6 +47,18 @@
       color: #555;
       margin-bottom: 4px;
     }
+
+    /* Regla esencial para que el navegador no elimine imágenes al imprimir */
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #img-qr {
+        display: block !important;
+        visibility: visible !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -55,7 +68,7 @@
     <div id="lbl-nombre" class="marca" style="font-size:12px; font-weight:normal; letter-spacing:normal;">Cargando...</div>
     <div id="lbl-caracteristicas" class="caracteristicas">Talle: - | Color: -</div>
     
-    <!-- Contenedor donde se pintará el QR Dinámico -->
+    <!-- Contenedor del QR -->
     <div id="canvas-qr">
       <img id="img-qr" src="" alt="Código QR Dinámico" />
     </div>
@@ -76,30 +89,47 @@
     // Capturamos el enlace dinámico que te lleva a consulta.html
     const urlQR_Dinamico = urlParams.get('urlqr') || (window.location.origin + '/consulta.html?codigo=' + codigo);
 
-    // 2. Inyectamos los datos reales de la prenda en la pantalla visual
+    // 2. Inyectamos los datos reales en la vista
     document.getElementById('lbl-nombre').textContent = nombre;
     document.getElementById('lbl-caracteristicas').textContent = 'Talle: ' + talle + ' | Color: ' + color;
     document.getElementById('lbl-precio').textContent = '$' + precio.toLocaleString('es-AR');
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // 3. Generamos el QR Dinámico usando la API global de QRServer (Formato seguro)
+    // 3. Generamos la URL correcta de la API de QRServer
     const imgElement = document.getElementById('img-qr');
-    imgElement.src = 'https://qrserver.com' + encodeURIComponent(urlQR_Dinamico);
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(urlQR_Dinamico)}`;
 
-    // 4. Esperamos a que la imagen del enlace se dibuje físicamente en la pantalla antes de mandar a imprimir
-    imgElement.onload = function() {
+    // Función para ejecutar el diálogo de impresión una sola vez
+    let impreso = false;
+    function dispararImpresion() {
+      if (impreso) return;
+      impreso = true;
+      
+      // Pequeña pausa para asegurar renderizado visual
       setTimeout(function() {
         window.print();
-        setTimeout(function() { window.close(); }, 500);
-      }, 500);
+        // Cierra la pestaña emergente tras la impresión o cancelación
+        setTimeout(function() { window.close(); }, 300);
+      }, 300);
+    }
+
+    // 4. Se dispara cuando la imagen cargó con éxito
+    imgElement.onload = function() {
+      dispararImpresion();
     };
 
-    // Respaldo por si hay microcortes de conexión
+    // Respaldo por si falla la carga o la conexión tarda
+    imgElement.onerror = function() {
+      console.error("Error al cargar la imagen del QR");
+      dispararImpresion();
+    };
+
+    // Asignamos la fuente de la imagen
+    imgElement.src = qrApiUrl;
+
+    // Tiempo límite de seguridad (2.5 segundos)
     setTimeout(function() {
-      if (!imgElement.complete) {
-        window.print();
-        setTimeout(function() { window.close(); }, 500);
-      }
+      dispararImpresion();
     }, 2500);
   </script>
 </body>
