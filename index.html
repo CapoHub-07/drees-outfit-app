@@ -915,19 +915,20 @@
       });
     }
 
-       function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
-      // Codificamos los datos para enviarlos de forma segura por la URL
+    function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
+      // Ordenamos todos los datos de la prenda en la URL
       const params = new URLSearchParams({
         codigo: codigo,
         nombre: nombre,
         precio: precio,
-        talle: talle,
-        color: color
+        talle: talle || '-',
+        color: color || '-'
       });
 
-      // Abrimos la pestaña apuntando directamente a tu archivo local etiqueta.html
+      // Abrimos la pestaña apuntando directamente a tu archivo etiqueta.html
       window.open(`etiqueta.html?${params.toString()}`, '_blank', 'width=400,height=400');
     }
+
 
   </script>
 </body>
