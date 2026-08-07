@@ -26,12 +26,6 @@
       letter-spacing: 2px; 
       margin-bottom: 2px;
     }
-    .detalle { 
-      font-size: 11px; 
-      color: #444; 
-      margin-bottom: 8px;
-    }
-    /* Estenedor para el QR nativo */
     #canvas-qr { 
       display: flex;
       justify-content: center;
@@ -81,8 +75,8 @@
 
     // 2. Inyectamos los datos reales de la prenda en la plantilla visual
     document.getElementById('lbl-nombre').textContent = nombre;
-    document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
-    document.getElementById('lbl-precio').textContent = `$${precio.toLocaleString('es-AR')}`;
+    document.getElementById('lbl-caracteristicas').textContent = 'Talle: ' + talle + ' | Color: ' + color;
+    document.getElementById('lbl-precio').textContent = '$' + precio.toLocaleString('es-AR');
     document.getElementById('lbl-codigo').textContent = codigo;
 
     // 3. Dibujamos el QR de forma local e instantánea en el contenedor
@@ -96,7 +90,7 @@
       correctLevel : QRCode.CorrectLevel.H
     });
 
-    // 4. Esperamos una pequeña fracción de segundo para asegurar la inyección del canvas antes de imprimir
+    // 4. Esperamos una pequeña fracción de segundo para asegurar la inyección antes de imprimir
     setTimeout(function() {
       window.print();
       setTimeout(function() { window.close(); }, 600);
