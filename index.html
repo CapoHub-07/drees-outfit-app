@@ -916,7 +916,7 @@
       // Texto estructurado para lectura desde cualquier smartphone convencional
       const textoQR = `DREES OUTFIT\nProducto: ${nombre}\nPrecio: $${precio.toLocaleString()}\nTalle: ${talle}\nColor: ${color}\nCódigo: ${codigo}`;
       
-      // API Oficial y restaurada para la carga del gráfico de barras QR
+      // API Oficial restaurada con su dominio completo para la carga del gráfico QR
       const urlGoogleQR = `https://googleapis.com{encodeURIComponent(textoQR)}&choe=UTF-8`;
 
       const ventanaImpresion = window.open('', '_blank', 'width=400,height=400');
@@ -924,7 +924,7 @@
       ventanaImpresion.document.write(`
         <html>
           <head>
-            <title>Etiqueta QR - \${nombre}</title>
+            <title>Etiqueta QR - ${nombre}</title>
             <style>
               body { 
                 font-family: 'Helvetica Neue', Arial, sans-serif; 
@@ -971,11 +971,11 @@
           <body>
             <div class="etiqueta-box">
               <div class="marca">DREES OUTFIT</div>
-              <div class="detalle">\${nombre}</div>
-              <div class="caracteristicas">Talle: \${talle} | Color: \${color}</div>
-              <img class="qr-img" src="\${urlGoogleQR}" alt="Código QR del Producto" />
-              <div class="precio">$\${precio.toLocaleString()}</div>
-              <div style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">\${codigo}</div>
+              <div class="detalle">${nombre}</div>
+              <div class="caracteristicas">Talle: ${talle} | Color: ${color}</div>
+              <img class="qr-img" src="${urlGoogleQR}" alt="Código QR del Producto" />
+              <div class="precio">$${precio.toLocaleString()}</div>
+              <div style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">${codigo}</div>
             </div>
             <script>
               window.onload = function() {
@@ -989,6 +989,7 @@
       
       ventanaImpresion.document.close();
     }
+
   </script>
 </body>
 </html>
