@@ -916,9 +916,8 @@
     }
 
     function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
-      const textoQR = `DREES OUTFIT\nProducto: ${nombre}\nPrecio: $${precio.toLocaleString()}\nTalle: ${talle}\nColor: ${color}\nCódigo: ${codigo}`;
-    // CORRECCIÓN DE LA URL EN LA FUNCIÓN imprimirEtiquetaQR:
-const urlGoogleQR = `https://quickchart.io{encodeURIComponent(codigo)}`;
+      // Usamos QuickChart pasándole de forma limpia el parámetro text= con el código
+      const urlQuickQR = 'https://quickchart.io' + encodeURIComponent(codigo);
 
       const ventanaImpresion = window.open('', '_blank', 'width=400,height=400');
       
@@ -974,13 +973,11 @@ const urlGoogleQR = `https://quickchart.io{encodeURIComponent(codigo)}`;
               <div class="marca">DREES OUTFIT</div>
               <div class="detalle">${nombre}</div>
               <div class="caracteristicas">Talle: ${talle} | Color: ${color}</div>
-              <!-- Se añade un id para controlar la carga de la imagen -->
-              <img id="img-codigo-qr" class="qr-img" src="${urlGoogleQR}" alt="Código QR" />
+              <img id="img-codigo-qr" class="qr-img" src="${urlQuickQR}" alt="Código QR del Producto" />
               <div class="precio">$${precio.toLocaleString()}</div>
               <div style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">${codigo}</div>
             </div>
             <script>
-              // CORRECCIÓN CRÍTICA: Esperamos a que la imagen se descargue físicamente y damos un delay de seguridad de 600ms antes de imprimir
               const imagenQR = document.getElementById('img-codigo-qr');
               
               function dispararImpresion() {
@@ -990,11 +987,14 @@ const urlGoogleQR = `https://quickchart.io{encodeURIComponent(codigo)}`;
                 }, 600);
               }
 
-              // Si la imagen ya se descargó al cargar el DOM, o cuando termine de hacerlo
               if (imagenQR.complete) {
                 dispararImpresion();
               } else {
                 imagenQR.onload = dispararImpresion;
+                imagenQR.onerror = function() {
+                  // Si falla la carga automática, disparamos la ventana de igual manera
+                  dispararImpresion();
+                };
               }
             <\/script>
           </body>
@@ -1003,7 +1003,6 @@ const urlGoogleQR = `https://quickchart.io{encodeURIComponent(codigo)}`;
       
       ventanaImpresion.document.close();
     }
-
 
   </script>
 </body>
