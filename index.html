@@ -790,22 +790,24 @@
     }
 
     async function borrarHistorialVentas() {
-      if (!usuarioSesion || usuarioSesion.rol !== 'admin') {
-        return alert('Acceso denegado. Se requieren permisos de administrador.');
-      }
+      const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
+      if (!confirmar) return;
 
-      if (!confirm('⚠️ ¿Estás seguro de vaciar el historial de ventas? Esta acción es irreversible.')) return;
-
-      const { error: errDetalle } = await _supabase.from('detalle_ventas').delete().neq('id', 0);
-      const { error: errVentas } = await _supabase.from('ventas').delete().neq('id', 0);
+      // Supabase requiere filtrar explícitamente para permitir el borrado. 
+      // Con gte('total', 0) le decimos que borre todas las ventas cuyo total sea mayor o igual a 0 (es decir, todas).
+      const { error: errDetalle } = await _supabase.from('detalle_ventas').delete().gte('precio_unitario', 0);
+      const { error: errVentas } = await _supabase.from('ventas').delete().gte('total', 0);
 
       if (errDetalle || errVentas) {
-        alert('Hubo un problema al borrar los registros.');
-      } else {
-        alert('Historial limpiado correctamente.');
-        cargarHistorialVentas();
+        console.error("Error al borrar historial:", errVentas?.message || errDetalle?.message);
+        alert("Hubo un problema de permisos al intentar limpiar el historial.");
+        return;
       }
+
+      alert("Historial borrado con éxito.");
+      cargarHistorialVentas();
     }
+
 
     function exportarExcel() {
       alert('Función para exportar lista activa. Podés integrar una librería externa o procesar un archivo CSV nativo.');
