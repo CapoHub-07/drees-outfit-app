@@ -44,11 +44,13 @@
     </button>
   </header>
 
-  <!-- NAV TABS -->
+   <!-- NAV TABS -->
   <nav id="master-nav" class="hidden bg-slate-950 border-b border-slate-800 p-2 flex justify-center gap-2">
     <button onclick="cambiarTab('pos')" id="tab-pos" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">🛍️ Caja / Venta</button>
     <button onclick="cambiarTab('ventas')" id="tab-ventas" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📊 Historial</button>
     <button onclick="cambiarTab('stock')" id="tab-stock" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📦 Cargar Stock</button>
+    <!-- NUEVO BOTÓN -->
+    <button onclick="cambiarTab('total-inventario')" id="tab-total-inventario" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">📋 Stock Total</button>
   </nav>
 
   <!-- CONTENIDO PRINCIPAL -->
@@ -243,7 +245,33 @@
         </div>
       </section>
     </div>
+ 
+    <!-- VISTA 4: STOCK TOTAL -->
+    <div id="view-total-inventario" class="hidden space-y-4">
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-amber-400">📋 Inventario y Stock General</h2>
+          <button onclick="cargarStockTotal()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300">🔄 Actualizar Lista</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
+              <tr>
+                <th class="p-3">Código</th>
+                <th class="p-3">Producto</th>
+                <th class="p-3 text-center">Talle</th>
+                <th class="p-3 text-center">Color</th>
+                <th class="p-3 text-right">Precio</th>
+                <th class="p-3 text-center">Stock</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-stock-total-body" class="divide-y divide-slate-700"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
 
+    
   </main>
 
   <script>
@@ -367,20 +395,30 @@
     function cambiarTab(tab) {
       apagarCamaras();
 
+      // Ocultar todas las vistas existentes más la nueva
       document.getElementById('view-pos').classList.add('hidden');
       document.getElementById('view-ventas').classList.add('hidden');
       document.getElementById('view-stock').classList.add('hidden');
+      document.getElementById('view-total-inventario').classList.add('hidden');
 
-      const botones = ['tab-pos', 'tab-ventas', 'tab-stock'];
+      // Resetear estilos de todos los botones incluyendo el nuevo
+      const botones = ['tab-pos', 'tab-ventas', 'tab-stock', 'tab-total-inventario'];
       botones.forEach(b => {
         const btn = document.getElementById(b);
-        btn.classList.remove('bg-amber-500', 'text-slate-950');
-        btn.classList.add('bg-slate-800', 'text-slate-300');
+        if (btn) {
+          btn.classList.remove('bg-amber-500', 'text-slate-950');
+          btn.classList.add('bg-slate-800', 'text-slate-300');
+        }
       });
 
-      document.getElementById('tab-' + tab).classList.remove('bg-slate-800', 'text-slate-300');
-      document.getElementById('tab-' + tab).classList.add('bg-amber-500', 'text-slate-950');
+      // Activar el botón seleccionado
+      const btnActivo = document.getElementById('tab-' + tab);
+      if (btnActivo) {
+        btnActivo.classList.remove('bg-slate-800', 'text-slate-300');
+        btnActivo.classList.add('bg-amber-500', 'text-slate-950');
+      }
 
+      // Mostrar la vista correspondiente y disparar su respectiva carga de datos
       if (tab === 'pos') document.getElementById('view-pos').classList.remove('hidden');
       if (tab === 'ventas') {
         document.getElementById('view-ventas').classList.remove('hidden');
@@ -390,7 +428,12 @@
         document.getElementById('view-stock').classList.remove('hidden');
         cargarStockBajo();
       }
+      if (tab === 'total-inventario') {
+        document.getElementById('view-total-inventario').classList.remove('hidden');
+        cargarStockTotal(); // Llamada a la función que crearemos abajo
+      }
     }
+
 
     // --- FUNCIONES DE CAJA / VENTA ---
 
@@ -801,6 +844,54 @@
         apagarCamaras();
       }
     }
+
+        // --- FUNCIÓN PARA MOSTRAR TODO EL STOCK ORDENADO NUMÉRICAMENTE ---
+    async function cargarStockTotal() {
+      const tbody = document.getElementById('tabla-stock-total-body');
+      if (!tbody) return;
+      tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-xs text-slate-500">Cargando inventario completo...</td></tr>`;
+
+      // Trae los productos ordenados de forma ascendente por el código de barras
+      const { data, error } = await _supabase
+        .from('productos')
+        .select('*')
+        .order('codigo_barras', { ascending: true });
+
+      if (error) {
+        console.error("Error al traer stock general:", error.message);
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-xs text-rose-400">Error al cargar el inventario.</td></tr>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-xs text-slate-500">No hay productos registrados en el sistema.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(p => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-slate-800 hover:bg-slate-800/40 transition-colors';
+
+        // Definimos estilos dinámicos para resaltar si un producto no tiene stock
+        const esBajo = p.stock_actual <= 3;
+        const badgeStock = esBajo 
+          ? `<span class="px-2.5 py-0.5 rounded-full font-bold bg-red-500/20 text-red-400 border border-red-500/30">${p.stock_actual} un.</span>`
+          : `<span class="px-2.5 py-0.5 rounded-full font-bold bg-green-500/20 text-green-400 border border-green-500/30">${p.stock_actual} un.</span>`;
+
+        row.innerHTML = `
+          <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras}</td>
+          <td class="p-3 text-xs font-bold text-white">${p.nombre} <br><span class="text-[10px] text-slate-500 font-normal uppercase">${p.categoria || 'Gral'}</span></td>
+          <td class="p-3 text-xs text-center text-slate-300 font-semibold">${p.talle || '-'}</td>
+          <td class="p-3 text-xs text-center text-slate-300">${p.color || '-'}</td>
+          <td class="p-3 text-xs text-right font-bold text-amber-400">$${(p.precio_venta || 0).toLocaleString()}</td>
+          <td class="p-3 text-xs text-center">${badgeStock}</td>
+        `;
+        
+        tbody.appendChild(row);
+      });
+    }
+
   </script>
 </body>
 </html>
