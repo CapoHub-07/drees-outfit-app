@@ -917,9 +917,8 @@
 
     function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
       const textoQR = `DREES OUTFIT\nProducto: ${nombre}\nPrecio: $${precio.toLocaleString()}\nTalle: ${talle}\nColor: ${color}\nCódigo: ${codigo}`;
-    // Reemplaza la línea vieja por esta en tu función de impresión:
+    // CORRECCIÓN DE LA URL EN LA FUNCIÓN imprimirEtiquetaQR:
 const urlGoogleQR = `https://quickchart.io{encodeURIComponent(codigo)}`;
-
 
       const ventanaImpresion = window.open('', '_blank', 'width=400,height=400');
       
