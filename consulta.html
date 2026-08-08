@@ -1,67 +1,12 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DreesOutfit - Consulta de Precios</title>
-  <!-- CDN Oficial para cargar el cliente JS de Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- CDN Oficial para activar el motor de diseño de Tailwind CSS v4 -->
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans">
-
-  <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 relative overflow-hidden">
-    <!-- Detalle estético de fondo -->
-    <div class="absolute -top-10 -right-10 w-32 height-32 bg-amber-500/10 rounded-full blur-2xl"></div>
+<script>
+    // ⚠️ REEMPLAZÁ ESTAS DOS LÍNEAS CON TUS DATOS REALES DE SUPABASE:
+    const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co"; 
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6bW9qZnVrY2lxYnhyam5tZGVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzUwNzIsImV4cCI6MjEwMTIxMTA3Mn0.Y7df-9yTdL-HL9jv0U6Eeecl92iDh1FAIbYZ1xKNS3Y";
     
-    <!-- HEADER MARCA -->
-    <div class="text-center space-y-1">
-      <h1 class="text-2xl font-black text-amber-400 tracking-widest">DREES OUTFIT</h1>
-      <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Verificador de Precios Digital</p>
-    </div>
-
-    <!-- PANTALLA DE CARGA / RESULTADO -->
-    <div id="contenedor-estado" class="py-8 text-center space-y-3">
-      <div class="animate-spin inline-block w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full"></div>
-      <p class="text-sm text-slate-400">Consultando stock y precio en la nube...</p>
-    </div>
-
-    <!-- TARJETA DEL PRODUCTO (OCULTA AL INICIO) -->
-    <div id="tarjeta-producto" class="hidden space-y-5 animate-fade-in">
-      <div class="border-t border-b border-slate-800 py-4 space-y-1 text-center">
-        <span id="res-categoria" class="text-[10px] font-extrabold uppercase bg-amber-400/10 text-amber-400 px-2.5 py-1 rounded-md tracking-wider">Categoría</span>
-        <h2 id="res-nombre" class="text-xl font-bold text-white mt-3">Nombre del Producto</h2>
-        <p class="text-sm text-slate-400 pt-1">Talle: <span id="res-talle" class="text-white font-semibold">-</span> &nbsp;|&nbsp; Color: <span id="res-color" class="text-white font-semibold">-</span></p>
-      </div>
-
-      <div class="text-center space-y-1">
-        <p class="text-xs text-slate-400 uppercase tracking-wider font-medium">Precio Actualizado</p>
-        <p id="res-precio" class="text-4xl font-black text-amber-400 tracking-tight">$0</p>
-      </div>
-
-      <!-- DISPONIBILIDAD -->
-      <div id="badge-disponibilidad" class="text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider">
-        ---
-      </div>
-    </div>
-
-    <!-- FOOTER COMERCIAL -->
-    <div class="text-center pt-2 border-t border-slate-800/60">
-      <p class="text-[10px] text-slate-500">Gracias por elegirnos &bull; DreesOutfit App</p>
-    </div>
-  </div>
-
-  <script>
-    // Configuración idéntica a tus credenciales de Supabase
-    const SUPABASE_URL = "https://supabase.co";
-    const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function verificarPrecio() {
-      // 1. Extraemos el código de barras que viene guardado en el link escaneado
+      // 1. Extraemos el código de barras
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('codigo');
 
@@ -70,43 +15,50 @@
         return;
       }
 
-      // 2. Consultamos directamente la base de datos de Supabase en tiempo real
-      const { data, error } = await _supabase
-        .from('productos')
-        .select('*')
-        .eq('codigo_barras', code)
-        .maybeSingle();
+      try {
+        // 2. Consultamos Supabase
+        const { data, error } = await _supabase
+          .from('productos')
+          .select('*')
+          .eq('codigo_barras', code)
+          .maybeSingle();
 
-      if (error) {
-        mostrarError("Hubo un error de conexión con el servidor.");
-        return;
+        if (error) {
+          console.error("Error Supabase:", error);
+          mostrarError("Hubo un error de conexión con la base de datos.");
+          return;
+        }
+
+        if (!data) {
+          mostrarError("Esta prenda aún no se encuentra registrada en el inventario actual.");
+          return;
+        }
+
+        // 3. Inyectamos los datos del producto
+        document.getElementById('contenedor-estado').classList.add('hidden');
+        
+        document.getElementById('res-categoria').textContent = data.categoria || "PRENDA";
+        document.getElementById('res-nombre').textContent = data.nombre;
+        document.getElementById('res-talle').textContent = data.talle || "U";
+        document.getElementById('res-color').textContent = data.color || "N/A";
+        document.getElementById('res-precio').textContent = `$${(data.precio_venta || 0).toLocaleString('es-AR')}`;
+
+        // 4. Mostrar disponibilidad
+        const bDisp = document.getElementById('badge-disponibilidad');
+        if (data.stock_actual > 0) {
+          bDisp.textContent = "✅ ¡Prenda Disponible en Tienda!";
+          bDisp.className = "text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        } else {
+          bDisp.textContent = "❌ Sin stock momentáneo (Consultar Vendedor)";
+          bDisp.className = "text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
+        }
+
+        document.getElementById('tarjeta-producto').classList.remove('hidden');
+
+      } catch (err) {
+        console.error("Error inesperado:", err);
+        mostrarError("No se pudo conectar con el servidor.");
       }
-
-      if (!data) {
-        mostrarError("Esta prenda aún no se encuentra registrada en el inventario actual.");
-        return;
-      }
-
-      // 3. Ocultamos el spinner de carga e inyectamos los datos del producto
-      document.getElementById('contenedor-estado').classList.add('hidden');
-      
-      document.getElementById('res-categoria').textContent = data.categoria || "PRENDA";
-      document.getElementById('res-nombre').textContent = data.nombre;
-      document.getElementById('res-talle').textContent = data.talle || "U";
-      document.getElementById('res-color').textContent = data.color || "N/A";
-      document.getElementById('res-precio').textContent = `$${(data.precio_venta || 0).toLocaleString('es-AR')}`;
-
-      // 4. Mostrar disponibilidad de stock de forma visual y atractiva
-      const bDisp = document.getElementById('badge-disponibilidad');
-      if (data.stock_actual > 0) {
-        bDisp.textContent = "✅ ¡Prenda Disponible en Tienda!";
-        bDisp.className = "text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-      } else {
-        bDisp.textContent = "❌ Sin stock momentáneo (Consultar Vendedor)";
-        bDisp.className = "text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
-      }
-
-      document.getElementById('tarjeta-producto').classList.remove('hidden');
     }
 
     function mostrarError(mensaje) {
@@ -118,8 +70,6 @@
       `;
     }
 
-    // Arrancar la consulta de inmediato al abrir la pestaña en el celular
+    // Arrancar la consulta
     verificarPrecio();
   </script>
-</body>
-</html>
