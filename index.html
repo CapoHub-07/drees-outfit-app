@@ -863,12 +863,14 @@
       }
     }
 
- // --- GESTIÓN DE STOCK TOTAL CON EDICIÓN SEGUARA (DOM EVENT LISTENERS) ---
+ // --- GESTIÓN DE STOCK TOTAL CON EDICIÓN GARANTIZADA ---
+
+// --- GESTIÓN DE STOCK TOTAL CON EDICIÓN GARANTIZADA ---
 
     async function cargarStockTotal() {
       const tbody = document.getElementById('tabla-stock-total-body');
       if (!tbody) return;
-      tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">Cargando inventario completo...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">Cargando inventario...</td></tr>`;
 
       const { data, error } = await _supabase
         .from('productos')
@@ -876,13 +878,13 @@
         .order('codigo_barras', { ascending: true });
 
       if (error) {
-        console.error("Error al traer stock general:", error.message);
-        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-rose-400">Error al cargar el inventario.</td></tr>`;
+        console.error("Error al traer stock:", error.message);
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-rose-400">Error al cargar datos.</td></tr>`;
         return;
       }
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">No hay productos registrados en el sistema.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">Sin productos.</td></tr>`;
         return;
       }
 
@@ -892,7 +894,6 @@
         const row = document.createElement('tr');
         row.className = 'border-b border-slate-800 hover:bg-slate-800/40 transition-colors';
 
-        // Estructura limpia de la fila
         row.innerHTML = `
           <td class="p-3 text-xs font-mono text-slate-400">${p.codigo_barras || '-'}</td>
           <td class="p-3 text-xs font-bold text-white">
@@ -902,43 +903,44 @@
           <td class="p-3 text-xs text-center text-slate-300 font-semibold">${p.talle || '-'}</td>
           <td class="p-3 text-xs text-center text-slate-300">${p.color || '-'}</td>
           
-          <!-- Celda Precio -->
+          <!-- PRECIO -->
           <td class="p-3 text-xs text-right font-bold text-amber-400">
             <span class="txt-precio">$${(p.precio_venta || 0).toLocaleString('es-AR')}</span>
             <input type="number" step="0.01" value="${p.precio_venta || 0}" 
-                   class="input-precio hidden w-20 bg-slate-900 border border-amber-500 rounded px-1.5 py-0.5 text-right text-amber-400 font-bold focus:outline-none" />
+                   class="input-precio w-20 bg-slate-900 border border-amber-500 rounded px-1.5 py-0.5 text-right text-amber-400 font-bold focus:outline-none" 
+                   style="display: none;" />
           </td>
 
-          <!-- Celda Stock -->
+          <!-- STOCK -->
           <td class="p-3 text-xs text-center font-bold">
             <span class="txt-stock ${p.stock_actual <= 3 ? 'text-rose-400' : 'text-emerald-400'}">
               ${p.stock_actual} un.
             </span>
             <input type="number" value="${p.stock_actual}" 
-                   class="input-stock hidden w-14 bg-slate-900 border border-emerald-500 rounded px-1 py-0.5 text-center text-emerald-400 font-bold focus:outline-none" />
+                   class="input-stock w-14 bg-slate-900 border border-emerald-500 rounded px-1 py-0.5 text-center text-emerald-400 font-bold focus:outline-none" 
+                   style="display: none;" />
           </td>
 
-          <!-- Columna Acciones -->
+          <!-- ACCIONES -->
           <td class="p-3 text-xs text-center space-x-1">
-            <button class="btn-edit bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold px-2 py-1 rounded transition-colors">
+            <button type="button" class="btn-edit bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-[11px] px-2.5 py-1 rounded transition-colors">
               ✏️ Modificar
             </button>
-            <button class="btn-save hidden bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded transition-colors">
+            <button type="button" class="btn-save bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] px-2.5 py-1 rounded transition-colors" style="display: none;">
               💾 Guardar
             </button>
-            <button class="btn-cancel hidden bg-rose-600 hover:bg-rose-500 text-white text-[10px] px-1.5 py-1 rounded transition-colors">
+            <button type="button" class="btn-cancel bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] px-2 py-1 rounded transition-colors" style="display: none;">
               ❌
             </button>
-            <button class="btn-qr bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-2 py-1 rounded transition-colors text-[10px]">
+            <button type="button" class="btn-qr bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] px-2 py-1 rounded transition-colors">
               🖨️ QR
             </button>
           </td>
         `;
 
-        // Asignación segura del texto para evitar que carácteres especiales rompan el HTML
         row.querySelector('.nombre-prod').textContent = p.nombre || 'Sin Nombre';
 
-        // Asignación de Elementos
+        // Captura de elementos
         const txtPrecio = row.querySelector('.txt-precio');
         const inputPrecio = row.querySelector('.input-precio');
         const txtStock = row.querySelector('.txt-stock');
@@ -949,50 +951,57 @@
         const btnCancel = row.querySelector('.btn-cancel');
         const btnQr = row.querySelector('.btn-qr');
 
-        // EVENTO 1: Habilitar Edición
-        btnEdit.addEventListener('click', () => {
-          txtPrecio.classList.add('hidden');
-          inputPrecio.classList.remove('hidden');
+        // CLICK: MODIFICAR
+        btnEdit.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
 
-          txtStock.classList.add('hidden');
-          inputStock.classList.remove('hidden');
+          txtPrecio.style.display = 'none';
+          inputPrecio.style.display = 'inline-block';
 
-          btnEdit.classList.add('hidden');
-          btnSave.classList.remove('hidden');
-          btnCancel.classList.remove('hidden');
-        });
+          txtStock.style.display = 'none';
+          inputStock.style.display = 'inline-block';
 
-        // EVENTO 2: Cancelar Edición
-        btnCancel.addEventListener('click', () => {
-          txtPrecio.classList.remove('hidden');
-          inputPrecio.classList.add('hidden');
+          btnEdit.style.display = 'none';
+          btnSave.style.display = 'inline-block';
+          btnCancel.style.display = 'inline-block';
+        };
 
-          txtStock.classList.remove('hidden');
-          inputStock.classList.add('hidden');
+        // CLICK: CANCELAR
+        btnCancel.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
 
-          btnEdit.classList.remove('hidden');
-          btnSave.classList.add('hidden');
-          btnCancel.classList.add('hidden');
-          
-          // Resetear valores de los inputs al valor original
+          txtPrecio.style.display = 'inline';
+          inputPrecio.style.display = 'none';
+
+          txtStock.style.display = 'inline';
+          inputStock.style.display = 'none';
+
+          btnEdit.style.display = 'inline-block';
+          btnSave.style.display = 'none';
+          btnCancel.style.display = 'none';
+
           inputPrecio.value = p.precio_venta || 0;
           inputStock.value = p.stock_actual || 0;
-        });
+        };
 
-        // EVENTO 3: Guardar en Supabase
-        btnSave.addEventListener('click', async () => {
+        // CLICK: GUARDAR EN SUPABASE
+        btnSave.onclick = async function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+
           const nuevoPrecio = parseFloat(inputPrecio.value);
           const nuevoStock = parseInt(inputStock.value);
 
-          if (isNaN(nuevoPrecio) || nuevoPrecio < 0) return alert('Ingresá un precio válido.');
-          if (isNaN(nuevoStock) || nuevoStock < 0) return alert('Ingresá un stock válido.');
+          if (isNaN(nuevoPrecio) || nuevoPrecio < 0) return alert('Precio no válido.');
+          if (isNaN(nuevoStock) || nuevoStock < 0) return alert('Stock no válido.');
 
           btnSave.disabled = true;
           btnSave.textContent = '⏳...';
 
-          // Identificador flexible (id o código de barras)
-          const campoKey = p.id ? 'id' : 'codigo_barras';
-          const valorKey = p.id || p.codigo_barras;
+          const campoID = p.id ? 'id' : 'codigo_barras';
+          const valorID = p.id || p.codigo_barras;
 
           const { error } = await _supabase
             .from('productos')
@@ -1000,99 +1009,28 @@
               precio_venta: nuevoPrecio, 
               stock_actual: nuevoStock 
             })
-            .eq(campoKey, valorKey);
+            .eq(campoID, valorID);
 
           if (error) {
-            console.error("Error al actualizar producto:", error);
-            alert('Error al guardar en Supabase: ' + error.message);
+            alert('Error al actualizar: ' + error.message);
             btnSave.disabled = false;
             btnSave.textContent = '💾 Guardar';
-            return;
-          }
-
-          // Refrescar tabla
-          cargarStockTotal();
-        });
-
-        // EVENTO 4: Reimprimir QR
-        btnQr.addEventListener('click', () => {
-          if (typeof imprimirEtiquetaQR === 'function') {
-            imprimirEtiquetaQR(
-              p.codigo_barras || '', 
-              p.nombre || '', 
-              p.precio_venta || 0, 
-              p.talle || '-', 
-              p.color || '-'
-            );
           } else {
-            alert('La función imprimirEtiquetaQR no está definida.');
+            cargarStockTotal(); // Recargar tabla
           }
-        });
+        };
+
+        // CLICK: QR
+        btnQr.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof imprimirEtiquetaQR === 'function') {
+            imprimirEtiquetaQR(p.codigo_barras || '', p.nombre || '', p.precio_venta || 0, p.talle || '-', p.color || '-');
+          }
+        };
 
         tbody.appendChild(row);
       });
-    }
-
-    // Activar los campos directamente manipulando la fila actual
-    function habilitarEdicion(btn) {
-      const fila = btn.closest('tr');
-      fila.querySelector('.txt-precio').classList.add('hidden');
-      fila.querySelector('.input-precio').classList.remove('hidden');
-
-      fila.querySelector('.txt-stock').classList.add('hidden');
-      fila.querySelector('.input-stock').classList.remove('hidden');
-
-      fila.querySelector('.btn-edit').classList.add('hidden');
-      fila.querySelector('.btn-save').classList.remove('hidden');
-      fila.querySelector('.btn-cancel').classList.remove('hidden');
-    }
-
-    // Cancelar la edición y regresar al estado original
-    function cancelarEdicion(btn) {
-      const fila = btn.closest('tr');
-      fila.querySelector('.txt-precio').classList.remove('hidden');
-      fila.querySelector('.input-precio').classList.add('hidden');
-
-      fila.querySelector('.txt-stock').classList.remove('hidden');
-      fila.querySelector('.input-stock').classList.add('hidden');
-
-      fila.querySelector('.btn-edit').classList.remove('hidden');
-      fila.querySelector('.btn-save').classList.add('hidden');
-      fila.querySelector('.btn-cancel').classList.add('hidden');
-    }
-
-    // Guardar los datos en Supabase usando la referencia de la fila actual
-    async function guardarEdicion(btn, columnaKey, valorKey) {
-      const fila = btn.closest('tr');
-      const nuevoPrecio = parseFloat(fila.querySelector('.input-precio').value);
-      const nuevoStock = parseInt(fila.querySelector('.input-stock').value);
-
-      if (isNaN(nuevoPrecio) || nuevoPrecio < 0) return alert('Por favor ingresá un precio válido.');
-      if (isNaN(nuevoStock) || nuevoStock < 0) return alert('Por favor ingresá un stock válido.');
-
-      btn.disabled = true;
-      btn.textContent = '⏳...';
-
-      const updateData = { 
-        precio_venta: nuevoPrecio, 
-        stock_actual: nuevoStock 
-      };
-
-      const { error } = await _supabase
-        .from('productos')
-        .update(updateData)
-        .eq(columnaKey, valorKey);
-
-      if (error) {
-        console.error("Error al actualizar producto:", error);
-        alert('No se pudieron guardar los cambios en Supabase: ' + error.message);
-        btn.disabled = false;
-        btn.textContent = '💾 Guardar';
-        return;
-      }
-
-      // Recargar la lista para refrescar la vista
-      cargarStockTotal();
     }
     
     // 2. Activar inputs para editar
