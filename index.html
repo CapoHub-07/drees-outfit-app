@@ -920,6 +920,38 @@
       renderizarTablaStock(data);
     }
 
+    // --- BÚSQUEDA Y GESTIÓN DE STOCK TOTAL ---
+
+    // 1. Buscar productos específicos en Supabase
+    async function buscarProductoStockTotal() {
+      const input = document.getElementById('buscador-stock-total');
+      const termino = input ? input.value.trim() : '';
+      const tbody = document.getElementById('tabla-stock-total-body');
+      if (!tbody) return;
+
+      if (!termino) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-amber-400">Escribí algo en el buscador para consultar (nombre, código, etc.).</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">Buscando productos...</td></tr>`;
+
+      // Consulta flexible a Supabase: busca coincidencia en nombre, código de barras, color o talle
+      const { data, error } = await _supabase
+        .from('productos')
+        .select('*')
+        .or(`nombre.ilike.%${termino}%,codigo_barras.ilike.%${termino}%,talle.ilike.%${termino}%,color.ilike.%${termino}%`)
+        .limit(30); // Limita el resultado a los mejores 30 para mantener la fluidez
+
+      if (error) {
+        console.error("Error al buscar productos:", error.message);
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-rose-400">Error en la búsqueda.</td></tr>`;
+        return;
+      }
+
+      renderizarTablaStock(data);
+    }
+
     // 2. Cargar lista general (opcional, cuando presionan "Ver Todos")
     async function cargarStockTotal() {
       const tbody = document.getElementById('tabla-stock-total-body');
@@ -1078,77 +1110,6 @@
 
         tbody.appendChild(row);
       });
-    }
-
-        // CLICK: QR
-        btnQr.onclick = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (typeof imprimirEtiquetaQR === 'function') {
-            imprimirEtiquetaQR(p.codigo_barras || '', p.nombre || '', p.precio_venta || 0, p.talle || '-', p.color || '-');
-          }
-        };
-
-        tbody.appendChild(row);
-      });
-    }
-    
-    // 2. Activar inputs para editar
-    function habilitarEdicion(id) {
-      document.getElementById(`txt-precio-${id}`).classList.add('hidden');
-      document.getElementById(`input-precio-${id}`).classList.remove('hidden');
-
-      document.getElementById(`txt-stock-${id}`).classList.add('hidden');
-      document.getElementById(`input-stock-${id}`).classList.remove('hidden');
-
-      document.getElementById(`btn-edit-${id}`).classList.add('hidden');
-      document.getElementById(`btn-save-${id}`).classList.remove('hidden');
-      document.getElementById(`btn-cancel-${id}`).classList.remove('hidden');
-    }
-
-    // 3. Cancelar edición
-    function cancelarEdicion(id) {
-      document.getElementById(`txt-precio-${id}`).classList.remove('hidden');
-      document.getElementById(`input-precio-${id}`).classList.add('hidden');
-
-      document.getElementById(`txt-stock-${id}`).classList.remove('hidden');
-      document.getElementById(`input-stock-${id}`).classList.add('hidden');
-
-      document.getElementById(`btn-edit-${id}`).classList.remove('hidden');
-      document.getElementById(`btn-save-${id}`).classList.add('hidden');
-      document.getElementById(`btn-cancel-${id}`).classList.add('hidden');
-    }
-
-    // 4. Guardar cambios en la base de datos de Supabase
-    async function guardarEdicion(id) {
-      const nuevoPrecio = parseFloat(document.getElementById(`input-precio-${id}`).value);
-      const nuevoStock = parseInt(document.getElementById(`input-stock-${id}`).value);
-
-      if (isNaN(nuevoPrecio) || nuevoPrecio < 0) return alert('Por favor ingresá un precio válido.');
-      if (isNaN(nuevoStock) || nuevoStock < 0) return alert('Por favor ingresá un stock válido.');
-
-      const btnSave = document.getElementById(`btn-save-${id}`);
-      btnSave.disabled = true;
-      btnSave.textContent = '⏳...';
-
-      const { error } = await _supabase
-        .from('productos')
-        .update({ 
-          precio_venta: nuevoPrecio, 
-          stock_actual: nuevoStock 
-        })
-        .eq('id', id);
-
-      if (error) {
-        console.error("Error al actualizar producto:", error);
-        alert('No se pudieron guardar los cambios en Supabase.');
-        btnSave.disabled = false;
-        btnSave.textContent = '💾 Guardar';
-        return;
-      }
-
-      // Recargamos la tabla para confirmar visualmente
-      cargarStockTotal();
     }
 
     function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
