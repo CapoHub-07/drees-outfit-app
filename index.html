@@ -807,12 +807,66 @@
           <td class="p-3 font-mono text-slate-400">${p.codigo_barras}</td>
           <td class="p-3 font-bold">${p.nombre} <span class="text-[10px] text-slate-500 font-normal">(${p.talle || 'U'} / ${p.color || 'U'})</span></td>
           <td class="p-3">$${p.precio_venta.toLocaleString()}</td>
-          <td class="p-3 text-center"><span class="bg-red-500/20 text-red-400 font-bold px-2 py-0.5 rounded">${p.stock_actual} un.</span></td>
-        `;
-        tbody.appendChild(tr);
+<td class="p-3 text-center"><span class="bg-red-500/20 text-red-400 font-bold px-2 py-0.5 rounded">${p.stock_actual} unidades</span></td>
+<td class="p-3 text-center">
+    <button onclick="darDeBajaProducto('${p.id}', '${p.nombre}')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-500/30 px-2 py-1 rounded-md text-[11px] font-semibold transition-all duration-200">
+        🗑️ Dar de Baja
+    </button>
+</td>
+`;
+tbody.appendChild(tr);
+
       });
     }
+async function darDeBajaProducto(idProducto, nombreProducto) {
+    const motivo = prompt(`¿Por qué deseas dar de baja "${nombreProducto}"?\nIntroduce el motivo (Ej: Falla de fábrica, Pérdida, Uso personal):`);
+    
+    if (motivo === null || motivo.trim() === "") {
+        alert("Operación cancelada. Debes especificar un motivo para la baja.");
+        return;
+    }
 
+    const confirmar = confirm(`¿Estás seguro de que deseas eliminar permanentemente "${nombreProducto}" del stock?`);
+    if (!confirmar) return;
+
+    try {
+        // 1. ELIMINAR EL PRODUCTO DE LA TABLA 'productos'
+        const { error: errorDelete } = await _supabase
+            .from('productos')
+            .delete()
+            .eq('id', idProducto);
+
+        if (errorDelete) throw errorDelete;
+
+        // 2. REGISTRAR LA BAJA EN EL HISTORIAL GENERAL DE 'ventas'
+        const { error: errorVenta } = await _supabase
+            .from('ventas')
+            .insert([
+                {
+                    vendedor: `BAJA: ${motivo.toUpperCase()}`,
+                    medio_pago: 'RETIRO STOCK',
+                    total: 0
+                }
+            ]);
+
+        if (errorVenta) throw errorVenta;
+
+        alert(`"${nombreProducto}" ha sido dado de baja con éxito y registrado en el historial.`);
+        
+        // Refrescar el stock en pantalla llamando a tu función de búsqueda o carga
+        if (typeof buscarProductoStockTotal === 'function') {
+            buscarProductoStockTotal();
+        } else if (typeof cargarStockTotal === 'function') {
+            cargarStockTotal();
+        }
+
+    } catch (error) {
+        console.error("Error al procesar la baja:", error);
+        alert("Hubo un error al procesar la baja. Revisa la consola.");
+    }
+}
+
+    
     async function borrarHistorialVentas() {
       const confirmar = confirm("¿Estás seguro de que quieres borrar todo el historial de ventas? Esta acción no se puede deshacer.");
       if (!confirmar) return;
