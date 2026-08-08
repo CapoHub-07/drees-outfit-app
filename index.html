@@ -863,10 +863,8 @@
       }
     }
 
-        // --- FUNCIÓN PARA MOSTRAR TODO EL STOCK ORDENADO NUMÉRICAMENTE ---
-// --- GESTIÓN DE STOCK TOTAL CON EDICIÓN Y REIMPRESIÓN DE QR ---
+ // --- GESTIÓN DE STOCK TOTAL CON EDICIÓN Y REIMPRESIÓN DE QR ---
 
-    // 1. Cargar la lista completa con opción de modificar e imprimir
     async function cargarStockTotal() {
       const tbody = document.getElementById('tabla-stock-total-body');
       if (!tbody) return;
@@ -890,8 +888,9 @@
 
       tbody.innerHTML = '';
       data.forEach(p => {
+        const idProd = p.id || p.codigo_barras; // Aseguramos tomar el identificador correcto
         const row = document.createElement('tr');
-        row.id = `fila-prod-${p.id}`;
+        row.id = `fila-prod-${idProd}`;
         row.className = 'border-b border-slate-800 hover:bg-slate-800/40 transition-colors';
 
         row.innerHTML = `
@@ -900,36 +899,36 @@
           <td class="p-3 text-xs text-center text-slate-300 font-semibold">${p.talle || '-'}</td>
           <td class="p-3 text-xs text-center text-slate-300">${p.color || '-'}</td>
           
-          <!-- Precio con Span e Input para editar -->
+          <!-- Celda Precio -->
           <td class="p-3 text-xs text-right font-bold text-amber-400">
-            <span id="txt-precio-${p.id}">$${(p.precio_venta || 0).toLocaleString('es-AR')}</span>
-            <input id="input-precio-${p.id}" type="number" step="0.01" value="${p.precio_venta || 0}" 
-                   class="hidden w-20 bg-slate-900 border border-amber-500 rounded px-1.5 py-0.5 text-right text-amber-400 font-bold focus:outline-none" />
+            <span class="txt-precio">$${(p.precio_venta || 0).toLocaleString('es-AR')}</span>
+            <input type="number" step="0.01" value="${p.precio_venta || 0}" 
+                   class="input-precio hidden w-20 bg-slate-900 border border-amber-500 rounded px-1.5 py-0.5 text-right text-amber-400 font-bold focus:outline-none" />
           </td>
 
-          <!-- Stock con Span e Input para editar -->
+          <!-- Celda Stock -->
           <td class="p-3 text-xs text-center font-bold">
-            <span id="txt-stock-${p.id}" class="${p.stock_actual <= 3 ? 'text-rose-400' : 'text-emerald-400'}">
+            <span class="txt-stock ${p.stock_actual <= 3 ? 'text-rose-400' : 'text-emerald-400'}">
               ${p.stock_actual} un.
             </span>
-            <input id="input-stock-${p.id}" type="number" value="${p.stock_actual}" 
-                   class="hidden w-14 bg-slate-900 border border-emerald-500 rounded px-1 py-0.5 text-center text-emerald-400 font-bold focus:outline-none" />
+            <input type="number" value="${p.stock_actual}" 
+                   class="input-stock hidden w-14 bg-slate-900 border border-emerald-500 rounded px-1 py-0.5 text-center text-emerald-400 font-bold focus:outline-none" />
           </td>
 
-          <!-- Acciones: Modificar + Imprimir QR -->
+          <!-- Acciones -->
           <td class="p-3 text-xs text-center space-x-1">
-            <button id="btn-edit-${p.id}" onclick="habilitarEdicion(${p.id})" 
-                    class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold px-2 py-1 rounded transition-colors" title="Modificar">
+            <button onclick="habilitarEdicion(this)" 
+                    class="btn-edit bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold px-2 py-1 rounded transition-colors" title="Modificar">
               ✏️ Modificar
             </button>
             
-            <button id="btn-save-${p.id}" onclick="guardarEdicion(${p.id})" 
-                    class="hidden bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded transition-colors">
+            <button onclick="guardarEdicion(this, '${p.id ? 'id' : 'codigo_barras'}', '${idProd}')" 
+                    class="btn-save hidden bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded transition-colors">
               💾 Guardar
             </button>
             
-            <button id="btn-cancel-${p.id}" onclick="cancelarEdicion(${p.id})" 
-                    class="hidden bg-rose-600 hover:bg-rose-500 text-white text-[10px] px-1.5 py-1 rounded transition-colors">
+            <button onclick="cancelarEdicion(this)" 
+                    class="btn-cancel hidden bg-rose-600 hover:bg-rose-500 text-white text-[10px] px-1.5 py-1 rounded transition-colors">
               ❌
             </button>
 
@@ -944,6 +943,68 @@
       });
     }
 
+    // Activar los campos directamente manipulando la fila actual
+    function habilitarEdicion(btn) {
+      const fila = btn.closest('tr');
+      fila.querySelector('.txt-precio').classList.add('hidden');
+      fila.querySelector('.input-precio').classList.remove('hidden');
+
+      fila.querySelector('.txt-stock').classList.add('hidden');
+      fila.querySelector('.input-stock').classList.remove('hidden');
+
+      fila.querySelector('.btn-edit').classList.add('hidden');
+      fila.querySelector('.btn-save').classList.remove('hidden');
+      fila.querySelector('.btn-cancel').classList.remove('hidden');
+    }
+
+    // Cancelar la edición y regresar al estado original
+    function cancelarEdicion(btn) {
+      const fila = btn.closest('tr');
+      fila.querySelector('.txt-precio').classList.remove('hidden');
+      fila.querySelector('.input-precio').classList.add('hidden');
+
+      fila.querySelector('.txt-stock').classList.remove('hidden');
+      fila.querySelector('.input-stock').classList.add('hidden');
+
+      fila.querySelector('.btn-edit').classList.remove('hidden');
+      fila.querySelector('.btn-save').classList.add('hidden');
+      fila.querySelector('.btn-cancel').classList.add('hidden');
+    }
+
+    // Guardar los datos en Supabase usando la referencia de la fila actual
+    async function guardarEdicion(btn, columnaKey, valorKey) {
+      const fila = btn.closest('tr');
+      const nuevoPrecio = parseFloat(fila.querySelector('.input-precio').value);
+      const nuevoStock = parseInt(fila.querySelector('.input-stock').value);
+
+      if (isNaN(nuevoPrecio) || nuevoPrecio < 0) return alert('Por favor ingresá un precio válido.');
+      if (isNaN(nuevoStock) || nuevoStock < 0) return alert('Por favor ingresá un stock válido.');
+
+      btn.disabled = true;
+      btn.textContent = '⏳...';
+
+      const updateData = { 
+        precio_venta: nuevoPrecio, 
+        stock_actual: nuevoStock 
+      };
+
+      const { error } = await _supabase
+        .from('productos')
+        .update(updateData)
+        .eq(columnaKey, valorKey);
+
+      if (error) {
+        console.error("Error al actualizar producto:", error);
+        alert('No se pudieron guardar los cambios en Supabase: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = '💾 Guardar';
+        return;
+      }
+
+      // Recargar la lista para refrescar la vista
+      cargarStockTotal();
+    }
+    
     // 2. Activar inputs para editar
     function habilitarEdicion(id) {
       document.getElementById(`txt-precio-${id}`).classList.add('hidden');
