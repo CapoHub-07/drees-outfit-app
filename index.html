@@ -1109,6 +1109,9 @@ async function darDeBajaProducto(idProducto, nombreProducto) {
             <button type="button" class="btn-qr bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] px-2 py-1 rounded transition-colors">
               🖨️ QR
             </button>
+         <button type="button" onclick="darDeBajaProducto('${p.id}', '${p.nombre}')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-[11px] px-2 py-1 rounded-lg transition-colors flex items-center gap-1" title="Dar de baja este artículo">
+    🗑️ Baja
+</button>
           </td>
         `;
 
