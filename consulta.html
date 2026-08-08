@@ -1,75 +1,130 @@
-<script>
-    // ⚠️ REEMPLAZÁ ESTAS DOS LÍNEAS CON TUS DATOS REALES DE SUPABASE:
-    const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co"; 
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6bW9qZnVrY2lxYnhyam5tZGVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzUwNzIsImV4cCI6MjEwMTIxMTA3Mn0.Y7df-9yTdL-HL9jv0U6Eeecl92iDh1FAIbYZ1xKNS3Y";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DreesOutfit - Consulta de Precios</title>
+  
+  <!-- CDN Supabase y Tailwind CSS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans">
+
+  <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 relative overflow-hidden">
+    <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
     
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <!-- HEADER -->
+    <div class="text-center space-y-1">
+      <h1 class="text-2xl font-black text-amber-400 tracking-widest">DREES OUTFIT</h1>
+      <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Verificador de Precios Digital</p>
+    </div>
 
-    async function verificarPrecio() {
-      // 1. Extraemos el código de barras
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('codigo');
+    <!-- PANTALLA DE CARGA / ESTADO -->
+    <div id="contenedor-estado" class="py-8 text-center space-y-3">
+      <div class="animate-spin inline-block w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full"></div>
+      <p class="text-sm text-slate-400">Consultando stock y precio en la nube...</p>
+    </div>
 
-      if (!code) {
-        mostrarError("Código de barras no detectado en el enlace.");
-        return;
-      }
+    <!-- TARJETA DEL PRODUCTO -->
+    <div id="tarjeta-producto" class="hidden space-y-5">
+      <div class="border-t border-b border-slate-800 py-4 space-y-1 text-center">
+        <span id="res-categoria" class="text-[10px] font-extrabold uppercase bg-amber-400/10 text-amber-400 px-2.5 py-1 rounded-md tracking-wider">Categoría</span>
+        <h2 id="res-nombre" class="text-xl font-bold text-white mt-3">Nombre del Producto</h2>
+        <p class="text-sm text-slate-400 pt-1">Talle: <span id="res-talle" class="text-white font-semibold">-</span> &nbsp;|&nbsp; Color: <span id="res-color" class="text-white font-semibold">-</span></p>
+      </div>
 
-      try {
-        // 2. Consultamos Supabase
-        const { data, error } = await _supabase
-          .from('productos')
-          .select('*')
-          .eq('codigo_barras', code)
-          .maybeSingle();
+      <div class="text-center space-y-1">
+        <p class="text-xs text-slate-400 uppercase tracking-wider font-medium">Precio Actualizado</p>
+        <p id="res-precio" class="text-4xl font-black text-amber-400 tracking-tight">$0</p>
+      </div>
 
-        if (error) {
-          console.error("Error Supabase:", error);
-          mostrarError("Hubo un error de conexión con la base de datos.");
-          return;
-        }
+      <div id="badge-disponibilidad" class="text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider">
+        ---
+      </div>
+    </div>
 
-        if (!data) {
-          mostrarError("Esta prenda aún no se encuentra registrada en el inventario actual.");
-          return;
-        }
+    <!-- FOOTER -->
+    <div class="text-center pt-2 border-t border-slate-800/60">
+      <p class="text-[10px] text-slate-500">Gracias por elegirnos &bull; DreesOutfit App</p>
+    </div>
+  </div>
 
-        // 3. Inyectamos los datos del producto
-        document.getElementById('contenedor-estado').classList.add('hidden');
-        
-        document.getElementById('res-categoria').textContent = data.categoria || "PRENDA";
-        document.getElementById('res-nombre').textContent = data.nombre;
-        document.getElementById('res-talle').textContent = data.talle || "U";
-        document.getElementById('res-color').textContent = data.color || "N/A";
-        document.getElementById('res-precio').textContent = `$${(data.precio_venta || 0).toLocaleString('es-AR')}`;
-
-        // 4. Mostrar disponibilidad
-        const bDisp = document.getElementById('badge-disponibilidad');
-        if (data.stock_actual > 0) {
-          bDisp.textContent = "✅ ¡Prenda Disponible en Tienda!";
-          bDisp.className = "text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-        } else {
-          bDisp.textContent = "❌ Sin stock momentáneo (Consultar Vendedor)";
-          bDisp.className = "text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
-        }
-
-        document.getElementById('tarjeta-producto').classList.remove('hidden');
-
-      } catch (err) {
-        console.error("Error inesperado:", err);
-        mostrarError("No se pudo conectar con el servidor.");
-      }
-    }
-
+  <script>
     function mostrarError(mensaje) {
       const contenedor = document.getElementById('contenedor-estado');
-      contenedor.innerHTML = `
-        <div class="text-3xl">⚠️</div>
-        <p class="text-sm font-bold text-rose-400">${mensaje}</p>
-        <p class="text-xs text-slate-500 pt-2">Por favor, solicitá asistencia en caja.</p>
-      `;
+      if (contenedor) {
+        contenedor.innerHTML = `
+          <div class="text-3xl">⚠️</div>
+          <p class="text-sm font-bold text-rose-400">${mensaje}</p>
+          <p class="text-xs text-slate-500 pt-2">Por favor, solicitá asistencia en caja.</p>
+        `;
+      }
     }
 
-    // Arrancar la consulta
-    verificarPrecio();
+    // Validación inicial de la librería
+    if (typeof supabase === 'undefined') {
+      mostrarError("Error al cargar el módulo de conexión. Revisa tu conexión a internet.");
+    } else {
+      const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co"; 
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6bW9qZnVrY2lxYnhyam5tZGVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzUwNzIsImV4cCI6MjEwMTIxMTA3Mn0.Y7df-9yTdL-HL9jv0U6Eeecl92iDh1FAIbYZ1xKNS3Y";
+      
+      const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      async function verificarPrecio() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('codigo');
+
+        if (!code) {
+          mostrarError("Código de barras no detectado en el enlace.");
+          return;
+        }
+
+        try {
+          const { data, error } = await _supabase
+            .from('productos')
+            .select('*')
+            .eq('codigo_barras', code)
+            .maybeSingle();
+
+          if (error) {
+            console.error("Error Supabase:", error);
+            mostrarError("Error de conexión con la base de datos.");
+            return;
+          }
+
+          if (!data) {
+            mostrarError("Esta prenda aún no se encuentra registrada.");
+            return;
+          }
+
+          document.getElementById('contenedor-estado').classList.add('hidden');
+          
+          document.getElementById('res-categoria').textContent = data.categoria || "PRENDA";
+          document.getElementById('res-nombre').textContent = data.nombre;
+          document.getElementById('res-talle').textContent = data.talle || "U";
+          document.getElementById('res-color').textContent = data.color || "N/A";
+          document.getElementById('res-precio').textContent = `$${(data.precio_venta || 0).toLocaleString('es-AR')}`;
+
+          const bDisp = document.getElementById('badge-disponibilidad');
+          if (data.stock_actual > 0) {
+            bDisp.textContent = "✅ ¡Prenda Disponible en Tienda!";
+            bDisp.className = "text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+          } else {
+            bDisp.textContent = "❌ Sin stock momentáneo (Consultar Vendedor)";
+            bDisp.className = "text-center py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
+          }
+
+          document.getElementById('tarjeta-producto').classList.remove('hidden');
+
+        } catch (err) {
+          console.error("Error inesperado:", err);
+          mostrarError("No se pudo conectar con el servidor.");
+        }
+      }
+
+      verificarPrecio();
+    }
   </script>
+</body>
+</html>
