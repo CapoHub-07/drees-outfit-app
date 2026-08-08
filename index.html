@@ -246,33 +246,54 @@
       </section>
     </div>
  
-    <!-- VISTA 4: STOCK TOTAL -->
-    <div id="view-total-inventario" class="hidden space-y-4">
-      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-semibold text-amber-400">📋 Inventario y Stock General</h2>
-          <button onclick="cargarStockTotal()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300">🔄 Actualizar Lista</button>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-slate-300">
-           <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
-              <tr>
-                <th class="p-3">Código</th>
-                <th class="p-3">Producto</th>
-                <th class="p-3 text-center">Talle</th>
-                <th class="p-3 text-center">Color</th>
-                <th class="p-3 text-right">Precio</th>
-                <th class="p-3 text-center">Stock</th>
-                <!-- AQUÍ VA LA LÍNEA NUEVA -->
-                <th class="p-3 text-center">Acciones</th>
-              </tr>
-            </thead>
-
-            <tbody id="tabla-stock-total-body" class="divide-y divide-slate-700"></tbody>
-          </table>
-        </div>
-      </section>
+<!-- VISTA 4: STOCK TOTAL CON BÚSQUEDA DIRECTA -->
+<div id="view-total-inventario" class="hidden space-y-4">
+  <section class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4">
+      <h2 class="text-lg font-semibold text-amber-400">📋 Consulta y Gestión de Stock</h2>
+      
+      <!-- CAMPO DE BÚSQUEDA Y BOTONES -->
+      <div class="flex items-center gap-2 w-full md:w-auto">
+        <input 
+          type="text" 
+          id="buscador-stock-total" 
+          onkeypress="if(event.key === 'Enter') buscarProductoStockTotal()" 
+          placeholder="🔍 Ingresá nombre, código de barras, talle..." 
+          class="bg-slate-900 border border-slate-600 focus:border-amber-400 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 outline-none w-full md:w-80 transition-colors"
+        />
+        <button onclick="buscarProductoStockTotal()" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+          🔍 Buscar
+        </button>
+        <button onclick="cargarStockTotal()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg border border-slate-600 text-slate-300 whitespace-nowrap" title="Cargar los últimos productos registrados">
+          📋 Ver Todos
+        </button>
+      </div>
     </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-slate-300">
+        <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider">
+          <tr>
+            <th class="p-3">Código</th>
+            <th class="p-3">Producto</th>
+            <th class="p-3 text-center">Talle</th>
+            <th class="p-3 text-center">Color</th>
+            <th class="p-3 text-right">Precio</th>
+            <th class="p-3 text-center">Stock</th>
+            <th class="p-3 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-stock-total-body" class="divide-y divide-slate-700">
+          <tr>
+            <td colspan="7" class="p-6 text-center text-xs text-slate-500">
+              Usa el buscador superior para encontrar un artículo por su código o nombre.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
 
     
   </main>
@@ -867,24 +888,66 @@
 
 // --- GESTIÓN DE STOCK TOTAL CON EDICIÓN GARANTIZADA ---
 
+// --- BÚSQUEDA Y GESTIÓN DE STOCK TOTAL ---
+
+    // 1. Buscar productos específicos en Supabase
+    async function buscarProductoStockTotal() {
+      const input = document.getElementById('buscador-stock-total');
+      const termino = input ? input.value.trim() : '';
+      const tbody = document.getElementById('tabla-stock-total-body');
+      if (!tbody) return;
+
+      if (!termino) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-amber-400">Escribí algo en el buscador para consultar (nombre, código, etc.).</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">Buscando productos...</td></tr>`;
+
+      // Consulta flexible a Supabase: busca coincidencia en nombre, código de barras, color o talle
+      const { data, error } = await _supabase
+        .from('productos')
+        .select('*')
+        .or(`nombre.ilike.%${termino}%,codigo_barras.ilike.%${termino}%,talle.ilike.%${termino}%,color.ilike.%${termino}%`)
+        .limit(30); // Limita el resultado a los mejores 30 para mantener la fluidez
+
+      if (error) {
+        console.error("Error al buscar productos:", error.message);
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-rose-400">Error en la búsqueda.</td></tr>`;
+        return;
+      }
+
+      renderizarTablaStock(data);
+    }
+
+    // 2. Cargar lista general (opcional, cuando presionan "Ver Todos")
     async function cargarStockTotal() {
       const tbody = document.getElementById('tabla-stock-total-body');
       if (!tbody) return;
-      tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">Cargando inventario...</td></tr>`;
+      
+      tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">Cargando últimos productos...</td></tr>`;
 
       const { data, error } = await _supabase
         .from('productos')
         .select('*')
-        .order('codigo_barras', { ascending: true });
+        .order('id', { ascending: false })
+        .limit(50); // Trae los últimos 50 registrados para no saturar
 
       if (error) {
-        console.error("Error al traer stock:", error.message);
         tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-rose-400">Error al cargar datos.</td></tr>`;
         return;
       }
 
+      renderizarTablaStock(data);
+    }
+
+    // 3. Renderizar las filas con edición y botones
+    function renderizarTablaStock(data) {
+      const tbody = document.getElementById('tabla-stock-total-body');
+      if (!tbody) return;
+
       if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">Sin productos.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-500">No se encontraron productos con ese criterio.</td></tr>`;
         return;
       }
 
@@ -940,7 +1003,6 @@
 
         row.querySelector('.nombre-prod').textContent = p.nombre || 'Sin Nombre';
 
-        // Captura de elementos
         const txtPrecio = row.querySelector('.txt-precio');
         const inputPrecio = row.querySelector('.input-precio');
         const txtStock = row.querySelector('.txt-stock');
@@ -951,46 +1013,35 @@
         const btnCancel = row.querySelector('.btn-cancel');
         const btnQr = row.querySelector('.btn-qr');
 
-        // CLICK: MODIFICAR
         btnEdit.onclick = function(e) {
           e.preventDefault();
           e.stopPropagation();
-
           txtPrecio.style.display = 'none';
           inputPrecio.style.display = 'inline-block';
-
           txtStock.style.display = 'none';
           inputStock.style.display = 'inline-block';
-
           btnEdit.style.display = 'none';
           btnSave.style.display = 'inline-block';
           btnCancel.style.display = 'inline-block';
         };
 
-        // CLICK: CANCELAR
         btnCancel.onclick = function(e) {
           e.preventDefault();
           e.stopPropagation();
-
           txtPrecio.style.display = 'inline';
           inputPrecio.style.display = 'none';
-
           txtStock.style.display = 'inline';
           inputStock.style.display = 'none';
-
           btnEdit.style.display = 'inline-block';
           btnSave.style.display = 'none';
           btnCancel.style.display = 'none';
-
           inputPrecio.value = p.precio_venta || 0;
           inputStock.value = p.stock_actual || 0;
         };
 
-        // CLICK: GUARDAR EN SUPABASE
         btnSave.onclick = async function(e) {
           e.preventDefault();
           e.stopPropagation();
-
           const nuevoPrecio = parseFloat(inputPrecio.value);
           const nuevoStock = parseInt(inputStock.value);
 
@@ -1005,10 +1056,7 @@
 
           const { error } = await _supabase
             .from('productos')
-            .update({ 
-              precio_venta: nuevoPrecio, 
-              stock_actual: nuevoStock 
-            })
+            .update({ precio_venta: nuevoPrecio, stock_actual: nuevoStock })
             .eq(campoID, valorID);
 
           if (error) {
@@ -1016,9 +1064,21 @@
             btnSave.disabled = false;
             btnSave.textContent = '💾 Guardar';
           } else {
-            cargarStockTotal(); // Recargar tabla
+            buscarProductoStockTotal(); // Vuelve a ejecutar la búsqueda actual
           }
         };
+
+        btnQr.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof imprimirEtiquetaQR === 'function') {
+            imprimirEtiquetaQR(p.codigo_barras || '', p.nombre || '', p.precio_venta || 0, p.talle || '-', p.color || '-');
+          }
+        };
+
+        tbody.appendChild(row);
+      });
+    }
 
         // CLICK: QR
         btnQr.onclick = function(e) {
