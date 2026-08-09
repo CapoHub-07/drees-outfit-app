@@ -85,39 +85,51 @@
     const imgElement = document.getElementById('img-qr');
     const qrApiUrl = `https://qrserver.com{encodeURIComponent(urlQR_Dinamico)}`;
 
-    // 4. DETECTOR DE IMPRESIÓN: Revisa si la URL trae la señal de la computadora
+        // 3. DETECTOR CLAVE: Identifica si la pestaña se abrió para imprimir
     const esImpresion = urlParams.has('print') || window.opener !== null;
 
     let impreso = false;
     function dispararImpresion() {
       if (impreso) return;
       impreso = true;
+      
       setTimeout(function() {
         window.print();
         setTimeout(function() { window.close(); }, 300);
-      }, 300);
+      }, 200);
     }
 
+    // COMPORTAMIENTO SEGÚN EL ORIGEN
     if (esImpresion) {
-      // MODO IMPRESIÓN: Manda el ticket directo a la impresora y detiene cualquier otra acción
+      // MODO IMPRESIÓN EXCLUSIVO: Remueve por completo el contenedor digital del mapa web
+      const panelVariantes = document.getElementById('panel-variantes-digital');
+      if (panelVariantes) {
+        panelVariantes.remove(); // Elimina el elemento por completo para que no busque nada
+      }
+      
+      // Manda el ticket directo a la impresora sin tocar Supabase
       imgElement.onload = function() { dispararImpresion(); };
       imgElement.onerror = function() { dispararImpresion(); };
-      setTimeout(function() { dispararImpresion(); }, 2000);
+      
+      // Respaldo de seguridad rápido por si la API de QR tarda
+      setTimeout(function() { dispararImpresion(); }, 1500);
+
     } else {
-      // MODO CELULAR: Se pone en modo oscuro y arranca la consulta pesada a Supabase
+      // MODO CELULAR: Se pone en modo oscuro y arranca la consulta interactiva
       document.body.classList.remove('bg-white');
-      imgElement.onload = null;
+      imgElement.onload = null; // Cancela la orden de mandar a imprimir de forma automática
       
       const panelVariantes = document.getElementById('panel-variantes-digital');
       if (panelVariantes) panelVariantes.classList.remove('hidden');
       
-      // Inicializamos Supabase SOLO si el cliente escaneó el QR con el móvil
-      const SUPABASE_URL = "TU_URL_DE_SUPABASE";
-      const SUPABASE_KEY = "TU_ANON_KEY_DE_SUPABASE";
+      // Inicializamos Supabase ÚNICAMENTE cuando entra un cliente escaneando con el móvil
+      const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
       const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       
       cargarVariantesDelProducto(_supabase, nombre);
     }
+
 
     // Cargamos la imagen al final para disparar los eventos
     imgElement.src = qrApiUrl;
