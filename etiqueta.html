@@ -2,201 +2,173 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Imprimir Etiqueta QR</title>
-  <style>
-    @media print {
-  .variantes-container {
-    display: none !important;
-  }
-}
-    body { 
-      font-family: 'Helvetica Neue', Arial, sans-serif; 
-      text-align: center; 
-      margin: 0; 
-      padding: 10px;
-      color: #000;
-      background: #fff;
-    }
-    .etiqueta-box {
-      border: 2px dashed #000;
-      padding: 15px;
-      display: inline-block;
-      width: 260px;
-    }
-    .marca { 
-      font-size: 14px; 
-      font-weight: 900; 
-      letter-spacing: 2px; 
-      margin-bottom: 2px;
-    }
-    #canvas-qr { 
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 10px auto;
-      width: 140px; 
-      height: 140px; 
-    }
-    #img-qr {
-      width: 140px;
-      height: 140px;
-      display: block;
-    }
-    .precio { 
-      font-size: 20px; 
-      font-weight: bold; 
-      margin-top: 4px;
-    }
-    .caracteristicas {
-      font-size: 10px;
-      color: #555;
-      margin-bottom: 4px;
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Etiqueta QR - Drees Outfit</title>
+  
+  <!-- Librerías de Supabase y Tailwind CSS -->
+  <script src="https://jsdelivr.net"></script>
+  <script src="https://tailwindcss.com"></script>
 
-    /* Regla esencial para que el navegador no elimine imágenes al imprimir */
+  <style>
+    /* Estilos base para la optimización del papel térmico de ticketera */
+    @page {
+      size: auto;
+      margin: 0mm;
+    }
+    body {
+      margin: 0;
+      padding: 10px;
+      background-color: #ffffff;
+      color: #000000;
+    }
+    /* El panel digital de variantes NO se dibuja en el papel físico impreso */
     @media print {
-      body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+      .no-print {
+        display: none !important;
       }
-      #img-qr {
-        display: block !important;
-        visibility: visible !important;
+      body {
+        padding: 0mm;
+        background-color: #ffffff;
+        color: #000000;
       }
     }
   </style>
-  <script src="https://jsdelivr.net"></script>
 </head>
-<body>
+<body class="flex flex-col items-center justify-center min-h-screen bg-slate-950 p-4 text-center">
 
-  <div class="etiqueta-box">
-    <div class="marca">DREES OUTFIT</div>
-    <div id="lbl-nombre" class="marca" style="font-size:12px; font-weight:normal; letter-spacing:normal;">Cargando...</div>
-    <div id="lbl-caracteristicas" class="caracteristicas">Talle: - | Color: -</div>
+  <!-- VISTA FÍSICA DE LA ETIQUETA (Lo que sale impreso) -->
+  <div class="bg-white text-black p-4 rounded-xl shadow-2xl border border-slate-200 w-full max-w-[280px] flex flex-col items-center gap-2">
+    <h2 id="lbl-nombre" class="font-extrabold text-base tracking-tight uppercase break-words w-full text-center">Producto</h2>
+    <p id="lbl-caracteristicas" class="text-xs font-semibold text-slate-700">Talle: - | Color: -</p>
     
-    <!-- Contenedor del QR -->
-    <div id="canvas-qr">
-      <img id="img-qr" src="" alt="Código QR Dinámico" />
+    <!-- Contenedor del QR generado por API -->
+    <div class="w-[140px] h-[140px] bg-white p-1 flex items-center justify-center border border-slate-300 rounded-lg">
+      <img id="img-qr" alt="Código QR del Producto" class="w-full h-full object-contain" />
     </div>
     
-    <div id="lbl-codigo" style="font-size: 8px; color: #888; font-family: monospace; margin-top: 4px;">-</div>
+    <span id="lbl-codigo" class="text-[10px] font-mono tracking-widest text-slate-500 uppercase mt-0.5">000000</span>
   </div>
 
-  <!-- PANEL DE DISPONIBILIDAD PARA EL CLIENTE -->
-<div class="variantes-container" style="margin-top: 25px; padding: 15px; background: #1e293b; border: 1px solid #475569; border-radius: 12px; font-family: sans-serif; text-align: left; max-width: 300px; margin-left: auto; margin-right: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-  <h4 style="color: #fbbf24; margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 5px;">
-    👕 Talles y Colores Disponibles
-  </h4>
-  <div id="lista-variantes-clientes" style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #cbd5e1;">
-    <span style="color: #94a3b8; font-style: italic;">Buscando disponibilidad en tiempo real...</span>
+  <!-- PANEL DIGITAL INTERACTIVO (Sólo visible al escanear con el celular) -->
+  <div id="panel-variantes-digital" class="no-print hidden w-full max-w-[280px] bg-slate-900/90 border border-amber-500/20 rounded-xl p-4 mt-4 space-y-3 shadow-xl text-left">
+    <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+      👕 Talles y Colores Disponibles
+    </h4>
+    <div id="lista-variantes-clientes" class="flex flex-col gap-2 text-xs text-slate-300">
+      <span class="text-slate-500 italic animate-pulse">Consultando disponibilidad en tiempo real...</span>
+    </div>
   </div>
-</div>
 
   <script>
-    // 1. Inicializar Supabase en la etiqueta (Reemplaza con tus credenciales reales del index.html)
-const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co";
-const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ==========================================
+    // CONFIGURACIÓN DE TU BASE DE DATOS SUPABASE
+    // ==========================================
+    // (Copia la URL y la Key exactamente igual a como las tienes en tu index.html)
+    const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 2. Función automática para buscar las variantes por nombre
-async function cargarVariantesDelProducto() {
-  const listaContainer = document.getElementById('lista-variantes-clientes');
-  if (!listaContainer || !nombre) return;
-
-  try {
-    // Buscamos todas las prendas que tengan exactamente el mismo nombre en la base de datos
-    const { data: variantes, error } = await _supabase
-      .from('productos')
-      .select('talle, color, stock_actual')
-      .eq('nombre', nombre);
-
-    if (error) throw error;
-
-    listaContainer.innerHTML = ''; // Limpiamos el texto de carga
-
-    if (variantes && variantes.length > 0) {
-      // Recorremos cada variante encontrada para armar la lista
-      variantes.forEach(v => {
-        const tieneStock = v.stock_actual > 0;
-        const colorStock = tieneStock ? '#34d399' : '#f87171';
-        const textoStock = tieneStock ? `📦 ${v.stock_actual} un.` : '❌ Sin Stock';
-
-        listaContainer.innerHTML += `
-          <div style="background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; display: flex; justify-between: space-between; align-items: center; justify-content: space-between;">
-            <div>
-              <span style="color: #fff; font-weight: bold;">Talle: <b style="color: #fbbf24;">${v.talle}</b></span><br>
-              <span style="color: #94a3b8; font-size: 11px;">Color: ${v.color}</span>
-            </div>
-            <span style="color: ${colorStock}; font-weight: bold; font-size: 11px; bg-color: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">
-              ${textoStock}
-            </span>
-          </div>
-        `;
-      });
-    } else {
-      listaContainer.innerHTML = '<span style="color: #f87171;">No se encontraron otras variantes de este artículo.</span>';
-    }
-  } catch (err) {
-    console.error("Error al conectar con el inventario:", err);
-    listaContainer.innerHTML = '<span style="color: #f87171;">Error al consultar el stock en tiempo real.</span>';
-  }
-}
-
-// Executamos la búsqueda inmediatamente al abrir la página
-cargarVariantesDelProducto();
-
-    // 1. Leemos los parámetros que viajan por la URL desde el index.html
+    // 1. Lectura e inyección de los parámetros de la URL enviados desde la app
     const urlParams = new URLSearchParams(window.location.search);
     const codigo = urlParams.get('codigo') || '000000';
     const nombre = urlParams.get('nombre') || 'Producto';
-    const precio = parseFloat(urlParams.get('precio')) || 0;
     const talle = urlParams.get('talle') || '-';
     const color = urlParams.get('color') || '-';
     
-    // Capturamos el enlace dinámico que te lleva a consulta.html
+    // Captura el link que se cifrará en el QR (el enlace directo a la app para ver el stock)
     const urlQR_Dinamico = urlParams.get('urlqr') || (window.location.origin + '/consulta.html?codigo=' + codigo);
 
-    // 2. Inyectamos los datos reales en la vista
+    // Inyectamos textos base en el recuadro impreso
     document.getElementById('lbl-nombre').textContent = nombre;
-    document.getElementById('lbl-caracteristicas').textContent = 'Talle: ' + talle + ' | Color: ' + color;
+    document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // 3. Generamos la URL correcta de la API de QRServer
+    // 2. Cargamos el generador de imágenes QRServer oficial
     const imgElement = document.getElementById('img-qr');
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(urlQR_Dinamico)}`;
+    const qrApiUrl = `https://qrserver.com{encodeURIComponent(urlQR_Dinamico)}`;
 
-    // Función para ejecutar el diálogo de impresión una sola vez
+    // 3. DETECTOR CLAVE: Identifica si la pestaña se abrió para imprimir
+    const esImpresion = urlParams.has('print') || window.opener !== null;
+
     let impreso = false;
     function dispararImpresion() {
       if (impreso) return;
       impreso = true;
       
-      // Pequeña pausa para asegurar renderizado visual
       setTimeout(function() {
         window.print();
-        // Cierra la pestaña emergente tras la impresión o cancelación
         setTimeout(function() { window.close(); }, 300);
       }, 300);
     }
 
-    // 4. Se dispara cuando la imagen cargó con éxito
-    imgElement.onload = function() {
-      dispararImpresion();
-    };
+    // Configuración del comportamiento según el canal de entrada
+    if (esImpresion) {
+      // MODO TICKET_PRINT: Ejecuta impresión instantánea al cargar la imagen del QR
+      imgElement.onload = function() { dispararImpresion(); };
+      imgElement.onerror = function() { dispararImpresion(); };
+      
+      // Respaldo de seguridad por si la API de códigos tarda en responder
+      setTimeout(function() { dispararImpresion(); }, 2500);
+    } else {
+      // MODO CELULAR_SCAN: Modifica la UI a oscuro, cancela la ticketera y consulta Supabase
+      document.body.classList.remove('bg-white');
+      imgElement.onload = null; // Desactivar impresión automática
+      
+      // Mostrar recuadro interactivo digital
+      const panelVariantes = document.getElementById('panel-variantes-digital');
+      if (panelVariantes) panelVariantes.classList.remove('hidden');
+      
+      // Lanza consulta de stock cruzado
+      cargarVariantesDelProducto();
+    }
 
-    // Respaldo por si falla la carga o la conexión tarda
-    imgElement.onerror = function() {
-      console.error("Error al cargar la imagen del QR");
-      dispararImpresion();
-    };
-
-    // Asignamos la fuente de la imagen
+    // Vincula la ruta final de la imagen del QR para iniciar el proceso
     imgElement.src = qrApiUrl;
 
-    // Tiempo límite de seguridad (2.5 segundos)
-    setTimeout(function() {
-      dispararImpresion();
-    }, 2500);
+    // ==========================================
+    // FUNCIÓN LÓGICA DE CONSULTA DE VARIANTES
+    // ==========================================
+    async function cargarVariantesDelProducto() {
+      const listaContainer = document.getElementById('lista-variantes-clientes');
+      if (!listaContainer || !nombre) return;
+
+      try {
+        // Consultamos en Supabase todos los registros con el mismo nombre base de prenda
+        const { data: variantes, error } = await _supabase
+          .from('productos')
+          .select('talle, color, stock_actual')
+          .eq('nombre', nombre);
+
+        if (error) throw error;
+
+        listaContainer.innerHTML = ''; // Borra el aviso flotante de carga
+
+        if (variantes && variantes.length > 0) {
+          variantes.forEach(v => {
+            const tieneStock = v.stock_actual > 0;
+            const badgeColor = tieneStock ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+            const badgeTexto = tieneStock ? `📦 ${v.stock_actual} un.` : '❌ Sin Stock';
+
+            listaContainer.innerHTML += `
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center transition-all">
+                <div>
+                  <span class="text-white font-bold">Talle: <b class="text-amber-400">${v.talle}</b></span>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Color: ${v.color}</p>
+                </div>
+                <span class="text-[11px] font-bold px-2.5 py-1 rounded-md border ${badgeColor}">
+                  ${badgeTexto}
+                </span>
+              </div>
+            `;
+          });
+        } else {
+          listaContainer.innerHTML = '<span class="text-rose-400 italic">No se encontraron otras variantes de esta prenda.</span>';
+        }
+      } catch (err) {
+        console.error("Error de conexión con inventario Supabase:", err);
+        listaContainer.innerHTML = '<span class="text-rose-400 italic">Error al consultar el stock en tiempo real.</span>';
+      }
+    }
   </script>
 </body>
 </html>
