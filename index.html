@@ -1219,22 +1219,26 @@ const { error: errorVenta } = await _supabase
       });
     }
 function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
-  // CAPTURAMOS EL LINK DINÁMICO DE TU WEB (Ej: https://vercel.app)
+  // Capturamos la URL base pública
   const urlConsultaPublica = `${window.location.origin}/consulta.html?codigo=${codigo}`;
 
-  // Empaquetamos los datos que la pantalla etiqueta.html necesita para dibujarse en papel
+  // Empaquetamos los datos de forma segura
   const params = new URLSearchParams({
     codigo: codigo, 
     nombre: nombre,
     precio: '', 
-    talle: talle || '-',
-    color: color || '-',
-    urlqr: urlConsultaPublica // Le pasamos la URL larga para que se dibuje el QR con el link
+    talle: talle || 'Único',
+    color: color || 'N/A',
+    urlqr: urlConsultaPublica
   });
 
-  // Abrimos la pestaña agregando la señal de impresión al final
-  window.open(`etiqueta.html?${params.toString()}&print=true`, '_blank', 'width=400,height=400');
+  // Forzamos que se concatene el parámetro de impresión al final
+  const urlFinal = `etiqueta.html?${params.toString()}&print=true`;
+
+  // Abrimos la pestaña emergente
+  window.open(urlFinal, '_blank', 'width=400,height=400');
 }
+
 
   </script>
 </body>
