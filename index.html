@@ -1219,23 +1219,22 @@ const { error: errorVenta } = await _supabase
       });
     }
 function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
-  // Capturamos la URL base pública
+  // Capturamos el link de consulta pública
   const urlConsultaPublica = `${window.location.origin}/consulta.html?codigo=${codigo}`;
 
-  // Empaquetamos los datos de forma segura
+  // Empaquetamos todos los datos requeridos
   const params = new URLSearchParams({
     codigo: codigo, 
     nombre: nombre,
     precio: '', 
     talle: talle || 'Único',
-    color: color || 'N/A',
-    urlqr: urlConsultaPublica
+    color: color || 'N/A'
   });
 
-  // Forzamos que se concatene el parámetro de impresión al final
-  const urlFinal = `etiqueta.html?${params.toString()}&print=true`;
+  // Generamos la URL final concatenando el QR y la bandera de impresión de forma manual y limpia
+  const urlFinal = `etiqueta.html?${params.toString()}&urlqr=${encodeURIComponent(urlConsultaPublica)}&print=true`;
 
-  // Abrimos la pestaña emergente
+  // Abrimos la pestaña emergente para la ticketera
   window.open(urlFinal, '_blank', 'width=400,height=400');
 }
 
