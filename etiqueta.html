@@ -60,15 +60,7 @@
   </div>
 
   <script>
-    // ==========================================
-    // CONFIGURACIÓN DE TU BASE DE DATOS SUPABASE
-    // ==========================================
-    // (Copia la URL y la Key exactamente igual a como las tienes en tu index.html)
-    const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // 1. Lectura inmediata de los parámetros que viajan por la URL
+        // 1. LECTURA INMEDIATA DE PARÁMETROS (Sin dependencias)
     const urlParams = new URLSearchParams(window.location.search);
     const codigo = urlParams.get('codigo') || '000000';
     const nombre = urlParams.get('nombre') || 'Producto';
@@ -76,82 +68,81 @@
     const color = urlParams.get('color') || '-';
     const urlQR_Dinamico = urlParams.get('urlqr') || (window.location.origin + '/consulta.html?codigo=' + codigo);
 
-    // 2. Inyección visual instantánea (Esto resolverá el texto congelado)
+    // 2. INYECCIÓN VISUAL INSTANTÁNEA (Cambia los textos antes de procesar lógica)
     document.getElementById('lbl-nombre').textContent = nombre;
     document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // 3. Generamos la imagen del código QR
+    // 3. GENERACIÓN DEL CÓDIGO QR
     const imgElement = document.getElementById('img-qr');
     const qrApiUrl = `https://qrserver.com{encodeURIComponent(urlQR_Dinamico)}`;
 
-        // 3. DETECTOR CLAVE: Identifica si la pestaña se abrió para imprimir
+    // 4. DETECTOR DE IMPRESIÓN PRIORITARIO
     const esImpresion = urlParams.has('print') || window.opener !== null;
 
     let impreso = false;
     function dispararImpresion() {
       if (impreso) return;
       impreso = true;
-      
       setTimeout(function() {
         window.print();
         setTimeout(function() { window.close(); }, 300);
-      }, 200);
+      }, 300);
     }
 
-    // COMPORTAMIENTO SEGÚN EL ORIGEN
+    // 5. EVALUACIÓN DE COMPORTAMIENTO
     if (esImpresion) {
-      // MODO IMPRESIÓN EXCLUSIVO: Remueve por completo el contenedor digital del mapa web
+      // MODO IMPRESIÓN COMPU: Removemos físicamente el cuadro digital de inmediato
       const panelVariantes = document.getElementById('panel-variantes-digital');
-      if (panelVariantes) {
-        panelVariantes.remove(); // Elimina el elemento por completo para que no busque nada
-      }
-      
-      // Manda el ticket directo a la impresora sin tocar Supabase
+      if (panelVariantes) panelVariantes.remove();
+
+      // Dispara la ticketera directo al cargar el QR
       imgElement.onload = function() { dispararImpresion(); };
       imgElement.onerror = function() { dispararImpresion(); };
-      
-      // Respaldo de seguridad rápido por si la API de QR tarda
       setTimeout(function() { dispararImpresion(); }, 1500);
 
     } else {
-      // MODO CELULAR: Se pone en modo oscuro y arranca la consulta interactiva
+      // MODO CELULAR: Entorno oscuro y consulta a Supabase
       document.body.classList.remove('bg-white');
-      imgElement.onload = null; // Cancela la orden de mandar a imprimir de forma automática
+      imgElement.onload = null;
       
       const panelVariantes = document.getElementById('panel-variantes-digital');
       if (panelVariantes) panelVariantes.classList.remove('hidden');
       
-      // Inicializamos Supabase ÚNICAMENTE cuando entra un cliente escaneando con el móvil
-      const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co";
-      const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
-      const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      
-      cargarVariantesDelProducto(_supabase, nombre);
+      // Inicializar base de datos SOLO si es un móvil escaneando
+      try {
+        const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
+        
+        if (SUPABASE_URL !== "https://zzmojfukciqbxrjnmdeo.supabase.co") {
+          const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          cargarVariantesDelProducto(_supabase, nombre);
+        } else {
+          document.getElementById('lista-variantes-clientes').innerHTML = '<span class="text-amber-400 italic">Configura las claves de Supabase en etiqueta.html para ver el stock en vivo.</span>';
+        }
+      } catch (e) {
+        console.error("Faltan configurar las credenciales de Supabase en este archivo:", e);
+      }
     }
 
-
-    // Cargamos la imagen al final para disparar los eventos
+    // Asignamos la ruta al final para iniciar el renderizado
     imgElement.src = qrApiUrl;
 
-
     // ==========================================
-    // FUNCIÓN LÓGICA DE CONSULTA DE VARIANTES
+    // FUNCIÓN LÓGICA DE CONSULTA (Mantenida intacta)
     // ==========================================
-    async function cargarVariantesDelProducto() {
+    async function cargarVariantesDelProducto(client, nombrePrenda) {
       const listaContainer = document.getElementById('lista-variantes-clientes');
-      if (!listaContainer || !nombre) return;
+      if (!listaContainer) return;
 
       try {
-        // Consultamos en Supabase todos los registros con el mismo nombre base de prenda
-        const { data: variantes, error } = await _supabase
+        const { data: variantes, error } = await client
           .from('productos')
           .select('talle, color, stock_actual')
-          .eq('nombre', nombre);
+          .eq('nombre', nombrePrenda);
 
         if (error) throw error;
-
-        listaContainer.innerHTML = ''; // Borra el aviso flotante de carga
+        listaContainer.innerHTML = '';
 
         if (variantes && variantes.length > 0) {
           variantes.forEach(v => {
@@ -160,7 +151,7 @@
             const badgeTexto = tieneStock ? `📦 ${v.stock_actual} un.` : '❌ Sin Stock';
 
             listaContainer.innerHTML += `
-              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center transition-all">
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
                 <div>
                   <span class="text-white font-bold">Talle: <b class="text-amber-400">${v.talle}</b></span>
                   <p class="text-slate-400 text-[11px] mt-0.5">Color: ${v.color}</p>
@@ -172,13 +163,14 @@
             `;
           });
         } else {
-          listaContainer.innerHTML = '<span class="text-rose-400 italic">No se encontraron otras variantes de esta prenda.</span>';
+          listaContainer.innerHTML = '<span class="text-rose-400 italic">No se encontraron otras variantes.</span>';
         }
       } catch (err) {
-        console.error("Error de conexión con inventario Supabase:", err);
-        listaContainer.innerHTML = '<span class="text-rose-400 italic">Error al consultar el stock en tiempo real.</span>';
+        console.error(err);
+        listaContainer.innerHTML = '<span class="text-rose-400 italic">Error al conectar con el inventario.</span>';
       }
     }
+
   </script>
 </body>
 </html>
