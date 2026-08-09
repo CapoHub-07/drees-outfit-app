@@ -1220,7 +1220,7 @@ const { error: errorVenta } = await _supabase
       const params = new URLSearchParams({
         codigo: codigo, 
         nombre: nombre,
-        precio: precio,
+        precio: '', 
         talle: talle || '-',
         color: color || '-',
         urlqr: urlConsultaPublica // Le pasamos la URL larga para que se dibuje el QR con el link
