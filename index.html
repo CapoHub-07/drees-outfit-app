@@ -892,8 +892,8 @@ const { error: errorVenta } = await _supabase
       const container = document.getElementById('reader-container');
       if (container.classList.contains('hidden')) {
         container.classList.remove('hidden');
-        html5QrCode = new Html5QrCode("reader");
-        html5QrCode.start(
+        html5Qrcode = new Html5Qrcode("reader");
+        html5Qrcode.start(
           { facingMode: "environment" },
          { fps: 15, qrbox: { width: 250, height: 150 } },
           (decodedText) => {
