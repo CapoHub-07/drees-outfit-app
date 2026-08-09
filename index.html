@@ -902,7 +902,7 @@ const { error: errorVenta } = await _supabase
         html5QrCode = new Html5QrCode("reader");
         html5QrCode.start(
           { facingMode: "environment" },
-          { fps: 15, qrbox: { width: 250, height: 150 }, formatsToSupport: barcodeFormats },
+         { fps: 15, qrbox: { width: 250, height: 150 } },
           (decodedText) => {
             document.getElementById('barcode-input').value = decodedText;
             buscarPorCodigo(decodedText);
