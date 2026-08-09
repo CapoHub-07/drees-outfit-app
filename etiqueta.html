@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Etiqueta QR - Drees Outfit</title>
   
-  <!-- Librerías de Supabase y Tailwind CSS -->
+  <!-- Librerías Oficiales Completas de Supabase y Tailwind CSS -->
   <script src="https://jsdelivr.net"></script>
-  <script src="https://tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
     /* Estilos base para la optimización del papel térmico de ticketera */
@@ -60,7 +60,7 @@
   </div>
 
   <script>
-        // 1. LECTURA INMEDIATA DE PARÁMETROS (Sin dependencias)
+    // 1. LECTURA INMEDIATA DE PARÁMETROS
     const urlParams = new URLSearchParams(window.location.search);
     const codigo = urlParams.get('codigo') || '000000';
     const nombre = urlParams.get('nombre') || 'Producto';
@@ -68,12 +68,12 @@
     const color = urlParams.get('color') || '-';
     const urlQR_Dinamico = urlParams.get('urlqr') || (window.location.origin + '/consulta.html?codigo=' + codigo);
 
-    // 2. INYECCIÓN VISUAL INSTANTÁNEA (Cambia los textos antes de procesar lógica)
+    // 2. INYECCIÓN VISUAL INSTANTÁNEA
     document.getElementById('lbl-nombre').textContent = nombre;
     document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // 3. GENERACIÓN DEL CÓDIGO QR
+    // 3. GENERACIÓN DEL CÓDIGO QR CORREGIDA
     const imgElement = document.getElementById('img-qr');
     const qrApiUrl = `https://qrserver.com{encodeURIComponent(urlQR_Dinamico)}`;
 
@@ -96,20 +96,20 @@
       const panelVariantes = document.getElementById('panel-variantes-digital');
       if (panelVariantes) panelVariantes.remove();
 
-      // Dispara la ticketera directo al cargar el QR
+      // Dispara la ticketera directo al cargar el QR sin demoras
       imgElement.onload = function() { dispararImpresion(); };
       imgElement.onerror = function() { dispararImpresion(); };
-      setTimeout(function() { dispararImpresion(); }, 1500);
+      setTimeout(function() { dispararImpresion(); }, 1200);
 
     } else {
-      // MODO CELULAR: Entorno oscuro y consulta a Supabase
+      // MODO CELULAR: Cambia entorno a oscuro y despliega panel interactivo
       document.body.classList.remove('bg-white');
       imgElement.onload = null;
       
       const panelVariantes = document.getElementById('panel-variantes-digital');
       if (panelVariantes) panelVariantes.classList.remove('hidden');
       
-      // Inicializar base de datos SOLO si es un móvil escaneando
+      // Inicializar base de datos e invocar búsqueda en Supabase
       try {
         const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co";
         const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
@@ -118,18 +118,18 @@
           const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
           cargarVariantesDelProducto(_supabase, nombre);
         } else {
-          document.getElementById('lista-variantes-clientes').innerHTML = '<span class="text-amber-400 italic">Configura las claves de Supabase en etiqueta.html para ver el stock en vivo.</span>';
+          document.getElementById('lista-variantes-clientes').innerHTML = '<span class="text-amber-400 italic">Por favor configura tus claves de Supabase en etiqueta.html</span>';
         }
       } catch (e) {
-        console.error("Faltan configurar las credenciales de Supabase en este archivo:", e);
+        console.error("Error al inicializar base de datos:", e);
       }
     }
 
-    // Asignamos la ruta al final para iniciar el renderizado
+    // Asignamos la ruta al final para iniciar el renderizado del QR
     imgElement.src = qrApiUrl;
 
     // ==========================================
-    // FUNCIÓN LÓGICA DE CONSULTA (Mantenida intacta)
+    // FUNCIÓN LÓGICA DE CONSULTA DE VARIANTES
     // ==========================================
     async function cargarVariantesDelProducto(client, nombrePrenda) {
       const listaContainer = document.getElementById('lista-variantes-clientes');
@@ -170,7 +170,6 @@
         listaContainer.innerHTML = '<span class="text-rose-400 italic">Error al conectar con el inventario.</span>';
       }
     }
-
   </script>
 </body>
 </html>
