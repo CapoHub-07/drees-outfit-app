@@ -217,10 +217,13 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <input type="text" id="new-codigo" placeholder="Código de Barras (Escaneá o escribí)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm font-bold text-amber-400 focus:outline-none focus:border-amber-400">
           <input type="text" id="new-nombre" placeholder="Nombre (ej: Remera Negra Oversize)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
+          <input type="text" id="new-talle" placeholder="Talle (ej: S, M, L, XL, 42)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
+          <input type="text" id="new-color" placeholder="Color (ej: Negro, Blanco, Azul)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
           <input type="text" id="new-categoria" placeholder="Categoría (ej: REMERAS)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
           <input type="number" id="new-precio" placeholder="Precio Venta (ej: 25000)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
           <input type="number" id="new-stock" placeholder="Stock Inicial (ej: 10)" class="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:border-amber-400">
         </div>
+
         <button onclick="guardarNuevoProducto()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition mt-2">Guardar Producto en Inventario</button>
       </section>
 
@@ -695,6 +698,8 @@ const barcodeFormats = [];
       const categoria = document.getElementById('new-categoria').value.trim().toUpperCase();
       const precio = parseFloat(document.getElementById('new-precio').value);
       const stock = parseInt(document.getElementById('new-stock').value);
+      const talle = document.getElementById('new-talle').value;
+      const color = document.getElementById('new-color').value;
 
       if (!codigo || !nombre || isNaN(precio) || isNaN(stock)) {
         return alert('Por favor, completá los campos obligatorios: Código, Nombre, Precio y Stock.');
@@ -714,13 +719,13 @@ const barcodeFormats = [];
       const { error } = await _supabase
         .from('productos')
         .insert([{
-          codigo_barras: codigo,
-          nombre: nombre,
-          categoria: categoria || 'VARIOS',
-          precio_venta: precio,
-          stock_actual: stock,
-          talle: 'Único', 
-          color: 'N/A'
+      codigo_barras: codigo,
+      nombre: nombre,
+      categoria: categoria || 'VARIOS',
+      precio_venta: precio,
+      stock_actual: stock,
+      talle: talle, // <-- Cambiado de 'Único' a la variable talle
+      color: color  // <-- Cambiado de 'N/A' a la variable color
         }]);
 
       if (error) {
@@ -735,7 +740,7 @@ const barcodeFormats = [];
       // Preguntar al usuario si desea imprimir la etiqueta del producto recién creado
       if (confirm(`¿Querés imprimir la etiqueta QR para ${nombre} ahora?`)) {
         // Ejecuta la función de impresión pasándole los datos reales que acabas de escribir
-        imprimirEtiquetaQR(codigo, nombre, precio, 'Único', 'N/A'); 
+        imprimirEtiquetaQR(codigo, nombre, precio, talle, color); 
       }
 
       // Aquí continúa tu código limpiando los inputs...
@@ -744,6 +749,8 @@ const barcodeFormats = [];
       document.getElementById('new-categoria').value = '';
       document.getElementById('new-precio').value = '';
       document.getElementById('new-stock').value = '';
+      document.getElementById('new-talle').value = '';
+      document.getElementById('new-color').value = '';
       
       cargarStockBajo();
     }
