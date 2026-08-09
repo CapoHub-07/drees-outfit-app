@@ -912,26 +912,44 @@ const { error: errorVenta } = await _supabase
     }
 
     function toggleCameraStock() {
-      const container = document.getElementById('reader-stock-container');
-      if (container.classList.contains('hidden')) {
-        container.classList.remove('hidden');
-        html5QrCodeStock = new Html5QrCode("reader-stock");
-        html5QrCodeStock.start(
-          { facingMode: "environment" },
-          { fps: 15, qrbox: { width: 250, height: 150 }, formatsToSupport: barcodeFormats },
-          (decodedText) => {
-            document.getElementById('new-codigo').value = decodedText;
-            apagarCamaras();
-          },
-          () => {}
-        ).catch(() => {
-          alert("No se pudo iniciar la cámara trasera.");
-          container.classList.add('hidden');
-        });
-      } else {
-        apagarCamaras();
-      }
+  const container = document.getElementById('reader-stock-container');
+  if (container.classList.contains('hidden')) {
+    container.classList.remove('hidden');
+    
+    // 1. Corregido con q minúscula
+    html5QrCodeStock = new Html5Qrcode("reader-stock");
+    
+    html5QrCodeStock.start(
+      { facingMode: "environment" },
+      { fps: 15, qrbox: { width: 250, height: 150 } }, // 2. Formatos removidos
+      (decodedText) => {
+        document.getElementById('new-codigo').value = decodedText;
+        
+        // 3. Apagado local integrado
+        if (html5QrCodeStock) {
+          html5QrCodeStock.stop().then(() => {
+            container.classList.add('hidden');
+          }).catch(err => console.error(err));
+        }
+      },
+      () => {}
+    ).catch((err) => {
+      console.error(err);
+      alert("No se pudo iniciar la cámara trasera en Stock.");
+      container.classList.add('hidden');
+    });
+  } else {
+    // Apagado manual si vuelven a tocar el botón
+    if (html5QrCodeStock) {
+      html5QrCodeStock.stop().then(() => {
+        container.classList.add('hidden');
+      }).catch(err => console.error(err));
+    } else {
+      container.classList.add('hidden');
     }
+  }
+}
+
 
  // --- GESTIÓN DE STOCK TOTAL CON EDICIÓN GARANTIZADA ---
 
