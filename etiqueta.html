@@ -68,62 +68,60 @@
     const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 1. Lectura e inyección de los parámetros de la URL enviados desde la app
+    // 1. Lectura inmediata de los parámetros que viajan por la URL
     const urlParams = new URLSearchParams(window.location.search);
     const codigo = urlParams.get('codigo') || '000000';
     const nombre = urlParams.get('nombre') || 'Producto';
     const talle = urlParams.get('talle') || '-';
     const color = urlParams.get('color') || '-';
-    
-    // Captura el link que se cifrará en el QR (el enlace directo a la app para ver el stock)
     const urlQR_Dinamico = urlParams.get('urlqr') || (window.location.origin + '/consulta.html?codigo=' + codigo);
 
-    // Inyectamos textos base en el recuadro impreso
+    // 2. Inyección visual instantánea (Esto resolverá el texto congelado)
     document.getElementById('lbl-nombre').textContent = nombre;
     document.getElementById('lbl-caracteristicas').textContent = `Talle: ${talle} | Color: ${color}`;
     document.getElementById('lbl-codigo').textContent = codigo;
 
-    // 2. Cargamos el generador de imágenes QRServer oficial
+    // 3. Generamos la imagen del código QR
     const imgElement = document.getElementById('img-qr');
     const qrApiUrl = `https://qrserver.com{encodeURIComponent(urlQR_Dinamico)}`;
 
-    // 3. DETECTOR CLAVE: Identifica si la pestaña se abrió para imprimir
+    // 4. DETECTOR DE IMPRESIÓN: Revisa si la URL trae la señal de la computadora
     const esImpresion = urlParams.has('print') || window.opener !== null;
 
     let impreso = false;
     function dispararImpresion() {
       if (impreso) return;
       impreso = true;
-      
       setTimeout(function() {
         window.print();
         setTimeout(function() { window.close(); }, 300);
       }, 300);
     }
 
-    // Configuración del comportamiento según el canal de entrada
     if (esImpresion) {
-      // MODO TICKET_PRINT: Ejecuta impresión instantánea al cargar la imagen del QR
+      // MODO IMPRESIÓN: Manda el ticket directo a la impresora y detiene cualquier otra acción
       imgElement.onload = function() { dispararImpresion(); };
       imgElement.onerror = function() { dispararImpresion(); };
-      
-      // Respaldo de seguridad por si la API de códigos tarda en responder
-      setTimeout(function() { dispararImpresion(); }, 2500);
+      setTimeout(function() { dispararImpresion(); }, 2000);
     } else {
-      // MODO CELULAR_SCAN: Modifica la UI a oscuro, cancela la ticketera y consulta Supabase
+      // MODO CELULAR: Se pone en modo oscuro y arranca la consulta pesada a Supabase
       document.body.classList.remove('bg-white');
-      imgElement.onload = null; // Desactivar impresión automática
+      imgElement.onload = null;
       
-      // Mostrar recuadro interactivo digital
       const panelVariantes = document.getElementById('panel-variantes-digital');
       if (panelVariantes) panelVariantes.classList.remove('hidden');
       
-      // Lanza consulta de stock cruzado
-      cargarVariantesDelProducto();
+      // Inicializamos Supabase SOLO si el cliente escaneó el QR con el móvil
+      const SUPABASE_URL = "TU_URL_DE_SUPABASE";
+      const SUPABASE_KEY = "TU_ANON_KEY_DE_SUPABASE";
+      const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      
+      cargarVariantesDelProducto(_supabase, nombre);
     }
 
-    // Vincula la ruta final de la imagen del QR para iniciar el proceso
+    // Cargamos la imagen al final para disparar los eventos
     imgElement.src = qrApiUrl;
+
 
     // ==========================================
     // FUNCIÓN LÓGICA DE CONSULTA DE VARIANTES
