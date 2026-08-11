@@ -1219,20 +1219,19 @@ const { error: errorVenta } = await _supabase
       });
     }
 function imprimirEtiquetaQR(codigo, nombre, talle, color) {
-  // 1. La URL que leerá el celular del cliente al escanear
+  // Captura la URL pública de consulta (ej: https://drees-outfit-app.vercel.app/consulta.html?codigo=123)
   const urlConsultaPublica = `${window.location.origin}/consulta.html?codigo=${encodeURIComponent(codigo)}`;
 
-  // 2. Parámetros para la vista de la etiqueta (solo datos visuales de la prenda)
+  // Empaquetamos solo los datos visuales de la etiqueta + el enlace para el QR
   const params = new URLSearchParams({
     codigo: codigo || '', 
     nombre: nombre || '',
     talle: talle || 'Único',
     color: color || 'N/A',
-    urlqr: urlConsultaPublica, // Este enlace es el que se transformará en los cuadritos del QR
+    urlqr: urlConsultaPublica,
     print: 'true'
   });
 
-  // 3. Abrir la ventana para imprimir la etiqueta en la ticketera
   const urlFinal = `etiqueta.html?${params.toString()}`;
   window.open(urlFinal, '_blank', 'width=400,height=500');
 }
