@@ -6,7 +6,7 @@
   <title>Etiqueta QR - Drees Outfit</title>
   
   <!-- Librerías Oficiales Completas de Supabase y Tailwind CSS -->
-  <script src="https://jsdelivr.net"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -75,7 +75,7 @@
 
     // 3. GENERACIÓN DEL CÓDIGO QR CORREGIDA
     const imgElement = document.getElementById('img-qr');
-    const qrApiUrl = `https://qrserver.com{encodeURIComponent(urlQR_Dinamico)}`;
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(urlQR_Dinamico)}`;
 
     // 4. DETECTOR DE IMPRESIÓN PRIORITARIO
     const esImpresion = urlParams.has('print') || window.opener !== null;
@@ -112,13 +112,13 @@
       // Inicializar base de datos e invocar búsqueda en Supabase
       try {
         const SUPABASE_URL = "https://zzmojfukciqbxrjnmdeo.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_m6UEIb277hu0TvPTnFaGyg_FzFiKixX";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6bW9qZnVrY2lxYnhyam5tZGVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2MzUwNzIsImV4cCI6MjEwMTIxMTA3Mn0.Y7df-9yTdL-HL9jv0U6Eeecl92iDh1FAIbYZ1xKNS3Y";
         
-        if (SUPABASE_URL !== "https://zzmojfukciqbxrjnmdeo.supabase.co") {
+        if (typeof supabase !== 'undefined') {
           const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
           cargarVariantesDelProducto(_supabase, nombre);
         } else {
-          document.getElementById('lista-variantes-clientes').innerHTML = '<span class="text-amber-400 italic">Por favor configura tus claves de Supabase en etiqueta.html</span>';
+          document.getElementById('lista-variantes-clientes').innerHTML = '<span class="text-rose-400 italic">Error al cargar librería de base de datos.</span>';
         }
       } catch (e) {
         console.error("Error al inicializar base de datos:", e);
