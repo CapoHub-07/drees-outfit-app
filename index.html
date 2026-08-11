@@ -1211,7 +1211,8 @@ const { error: errorVenta } = await _supabase
           e.preventDefault();
           e.stopPropagation();
           if (typeof imprimirEtiquetaQR === 'function') {
-            imprimirEtiquetaQR(p.codigo_barras || '', p.nombre || '', p.precio_venta || 0, p.talle || '-', p.color || '-');
+            // ✅ Corrección para la línea 1214:
+          imprimirEtiquetaQR(p.codigo_barras || '', p.nombre || '', p.talle || '', p.color || '');
           }
         };
 
