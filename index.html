@@ -1218,24 +1218,23 @@ const { error: errorVenta } = await _supabase
         tbody.appendChild(row);
       });
     }
-function imprimirEtiquetaQR(codigo, nombre, precio, talle, color) {
-  // Capturamos el link de consulta pública
-  const urlConsultaPublica = `${window.location.origin}/consulta.html?codigo=${codigo}`;
+function imprimirEtiquetaQR(codigo, nombre, talle, color) {
+  // 1. La URL que leerá el celular del cliente al escanear
+  const urlConsultaPublica = `${window.location.origin}/consulta.html?codigo=${encodeURIComponent(codigo)}`;
 
-  // Empaquetamos todos los datos requeridos
+  // 2. Parámetros para la vista de la etiqueta (solo datos visuales de la prenda)
   const params = new URLSearchParams({
-    codigo: codigo, 
-    nombre: nombre,
-    precio: '', 
+    codigo: codigo || '', 
+    nombre: nombre || '',
     talle: talle || 'Único',
-    color: color || 'N/A'
+    color: color || 'N/A',
+    urlqr: urlConsultaPublica, // Este enlace es el que se transformará en los cuadritos del QR
+    print: 'true'
   });
 
-  // Generamos la URL final concatenando el QR y la bandera de impresión de forma manual y limpia
-  const urlFinal = `etiqueta.html?${params.toString()}&urlqr=${encodeURIComponent(urlConsultaPublica)}&print=true`;
-
-  // Abrimos la pestaña emergente para la ticketera
-  window.open(urlFinal, '_blank', 'width=400,height=400');
+  // 3. Abrir la ventana para imprimir la etiqueta en la ticketera
+  const urlFinal = `etiqueta.html?${params.toString()}`;
+  window.open(urlFinal, '_blank', 'width=400,height=500');
 }
 
 
